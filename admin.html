@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>佛學知識王 · 後台管理</title>
+<style>
+  /* 色票與字型和遊戲畫面(index.html)完全一致 */
+  :root{
+    --ink:#2b1d16;      /* 墨褐 */
+    --ink-2:#7a6653;
+    --bg:#f2e2bd;       /* 米黃(主體底色) */
+    --paper:#f2e9db;    /* 宣紙 */
+    --surface:#fffdf7;  /* 卡片 */
+    --line:#e6dac6;
+    --line-2:#f3ecdd;
+    --edge:rgba(90,28,13,.20);
+    --drop:rgba(150,105,50,.30);
+
+    --brand:#5a1c0d;    /* 袈裟褐紅 */
+    --brand-d:#2a0e07;
+    --brand-l:#9a3b16;  /* 赭石 */
+    --signal:#d9a227;   /* 金 */
+    --signal-d:#96690c;
+
+    --blue:#1e5e9c;     /* 煩惱診療室 */
+    --yellow:#c08a14;   /* 熟悉又陌生的詞彙 */
+    --red:#b22d2a;      /* 翻轉傳統迷思 */
+    --violet:#6b3fa0;   /* 佛系密碼大解謎 */
+    --ok:#3f7d53;
+
+    --sans:"Segoe UI Variable Display","Segoe UI","Helvetica Neue","Noto Sans TC","PingFang TC","Microsoft JhengHei",Arial,sans-serif;
+    --mono:"SFMono-Regular","Roboto Mono",ui-monospace,Menlo,Consolas,"Courier New",monospace;
+
+    --pad:clamp(12px,1.8vw,30px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--sans);color:var(--ink);line-height:1.6;min-height:100vh;
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 14% 6%, rgba(255,255,255,.55) 0 14%, transparent 50%),
+      radial-gradient(circle at 90% 94%, rgba(154,59,22,.16) 0 26%, transparent 64%),
+      linear-gradient(158deg,#faf0da 0%, var(--bg) 44%, #e6d0a2 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ====== 頂欄:與遊戲的 deck-bar 同一款 ====== */
+  .deck-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    max-width:1100px;margin:0 auto;padding:var(--pad) var(--pad) 10px;
+    border-bottom:2px solid rgba(154,59,22,.28)}
+  .deck-bar .mark{display:flex;align-items:center;gap:10px;font-weight:800;
+    font-size:clamp(15px,1.5vw,21px);color:var(--brand)}
+  .deck-bar .mark .dot{width:13px;height:13px;border-radius:50%;background:var(--signal);
+    box-shadow:0 0 0 5px rgba(255,166,2,.22);flex:0 0 auto}
+  .deck-bar .mark small{display:block;font-family:var(--mono);font-size:11px;font-weight:700;
+    letter-spacing:.16em;color:var(--ink-2);text-transform:uppercase}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:22px var(--pad) 70px}
+  .idx{font-family:var(--mono);font-size:clamp(11px,1vw,13px);letter-spacing:.18em;
+    color:var(--signal-d);text-transform:uppercase;margin-bottom:8px}
+
+  /* ====== 統計卡:沿用遊戲結果畫面的 stat ====== */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,1.4vw,18px);margin-bottom:24px}
+  .stat{position:relative;overflow:hidden;text-align:center;background:var(--surface);border:none;
+    border-radius:20px;padding:clamp(14px,2vh,22px) 10px;box-shadow:0 8px 0 var(--drop)}
+  .stat::before{content:"";position:absolute;left:0;top:0;height:8px;width:100%;background:var(--signal)}
+  .stat.l1::before{background:var(--blue)}
+  .stat.l2::before{background:var(--yellow)}
+  .stat.l3::before{background:var(--red)}
+  .stat.l4::before{background:var(--violet)}
+  .stat .n{font-family:var(--mono);font-size:clamp(26px,3.4vw,46px);font-weight:900;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--ink)}
+  .stat .l{font-weight:700;font-size:clamp(11px,1.1vw,14px);letter-spacing:.06em;color:var(--ink-2);margin-top:8px}
+
+  /* ====== 面板 ====== */
+  .panel{background:var(--surface);border:none;border-radius:20px;
+    padding:clamp(18px,2.4vh,28px) clamp(18px,2.2vw,30px);margin-bottom:26px;box-shadow:0 8px 0 var(--drop)}
+  .panel h2{font-size:clamp(18px,2vw,26px);font-weight:900;letter-spacing:.04em;color:var(--ink);
+    display:flex;align-items:center;gap:9px;margin-bottom:12px}
+  .panel h2::before{content:"";width:14px;height:14px;border-radius:4px;background:var(--brand-l);flex:0 0 auto}
+  .note{color:var(--ink-2);font-size:14px;line-height:1.7;margin:-2px 0 14px}
+  .note b{color:var(--brand-l)}
+
+  .hint{background:var(--paper);border:1.5px dashed rgba(217,162,39,.75);border-radius:16px;
+    padding:14px 18px;font-size:14px;color:var(--ink-2);margin-bottom:14px;line-height:1.95}
+  .hint b{color:var(--ink)}
+  .hint code{font-family:var(--mono);background:rgba(255,255,255,.75);border:1px solid var(--line);
+    padding:2px 8px;border-radius:7px;color:var(--brand);font-size:13px}
+
+  textarea{
+    width:100%;resize:vertical;
+    font-family:var(--mono);font-size:14px;line-height:1.9;
+    color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:16px;
+    padding:14px 16px;outline:none;transition:border-color .18s,background .18s;
+  }
+  #bankText{height:340px}
+  textarea:focus{border-color:var(--signal);background:#fff}
+
+  .msg{min-height:24px;margin:12px 0 4px;font-size:14px;font-weight:800;white-space:pre-line;color:var(--ink-2)}
+  .msg.ok{color:var(--ok)}
+  .msg.err{color:#a3241d}
+
+  /* ====== 按鈕:遊戲的 cta / ghost ====== */
+  .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:8px}
+  .cta{font-family:var(--sans);font-weight:800;font-size:16px;cursor:pointer;color:#fff;
+    background:var(--brand-l);border:none;border-radius:999px;padding:12px 28px;letter-spacing:.02em;
+    box-shadow:0 6px 0 var(--brand);transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .18s,filter .18s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--brand);filter:brightness(1.08)}
+  .cta:active{transform:translateY(4px);box-shadow:0 2px 0 var(--brand)}
+  .cta.sm{font-size:14.5px;padding:10px 22px;box-shadow:0 5px 0 var(--brand)}
+  .ghost{font-family:var(--sans);font-weight:700;font-size:14px;letter-spacing:.04em;cursor:pointer;
+    background:rgba(255,255,255,.6);border:1.5px solid var(--edge);border-radius:999px;padding:11px 22px;
+    color:var(--brand);text-decoration:none;
+    transition:background .18s,transform .18s,color .18s,border-color .18s;
+    display:inline-flex;align-items:center;gap:6px}
+  .ghost:hover{background:#fff;transform:translateY(-1px)}
+  .ghost.danger{color:var(--red);border-color:rgba(178,45,42,.4)}
+  .ghost.danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+  .ghost.sm{font-size:13px;padding:8px 16px}
+
+  /* ====== 分類膠囊(篩選 / 批次 / 表單共用) ====== */
+  .lv-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px;
+    font-size:14px;color:var(--ink-2)}
+  .lv-toolbar .sep{flex:1;min-width:0}
+  .lv-toolbar .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-2);font-weight:700}
+  .grp{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2)}
+  .lp{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-family:var(--sans);font-weight:800;
+    font-size:13.5px;padding:8px 14px;border-radius:999px;border:2px solid var(--edge);
+    background:rgba(255,255,255,.6);color:var(--ink);
+    transition:transform .18s cubic-bezier(.2,.7,.2,1),background .18s,border-color .18s,box-shadow .18s,color .18s}
+  .lp .sw{width:13px;height:13px;border-radius:4px;flex:0 0 13px;background:var(--ink-2)}
+  .lp[data-level="煩惱診療室"] .sw{background:var(--blue)}
+  .lp[data-level="熟悉又陌生的詞彙"] .sw{background:var(--yellow)}
+  .lp[data-level="翻轉傳統迷思"] .sw{background:var(--red)}
+  .lp[data-level="佛系密碼大解謎"] .sw{background:var(--violet)}
+  .lp:hover{transform:translateY(-2px);background:#fff}
+  .lp.active{color:#fff;box-shadow:0 5px 0 var(--drop);background:var(--brand-l);border-color:var(--brand-l)}
+  .lp.active[data-level="煩惱診療室"]{background:var(--blue);border-color:var(--blue)}
+  .lp.active[data-level="熟悉又陌生的詞彙"]{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+  .lp.active[data-level="翻轉傳統迷思"]{background:var(--red);border-color:var(--red)}
+  .lp.active[data-level="佛系密碼大解謎"]{background:var(--violet);border-color:var(--violet)}
+  .lp.active .sw{background:#fff}
+  .lp.active[data-level="熟悉又陌生的詞彙"] .sw{background:var(--ink)}
+  .lp .cnt{font-family:var(--mono);font-size:11.5px;opacity:.72;font-weight:700}
+
+  /* ====== 題庫工具列 ====== */
+  .bank-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  .search{position:relative;flex:1;min-width:190px}
+  .search input{width:100%;font-family:var(--sans);font-size:14px;color:var(--ink);
+    background:var(--paper);border:2px solid var(--line);border-radius:999px;
+    padding:10px 16px 10px 38px;outline:none;transition:border-color .18s,background .18s}
+  .search input:focus{border-color:var(--signal);background:#fff}
+  .search .ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);
+    color:var(--ink-2);font-size:15px;pointer-events:none}
+  .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  .listinfo{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+
+  /* ====== 題目卡片 ====== */
+  .qlist{display:flex;flex-direction:column;gap:12px}
+  .qcard{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;
+    padding:13px 16px;transition:background .15s,border-color .15s,box-shadow .15s}
+  .qcard:hover{background:#fff;border-color:var(--edge)}
+  .qcard.flash{animation:flash 1.4s ease-out}
+  @keyframes flash{0%{box-shadow:0 0 0 4px rgba(217,162,39,.75);background:#fff}
+                   100%{box-shadow:0 0 0 0 rgba(217,162,39,0)}}
+  .qc-head{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .rowchk{width:17px;height:17px;cursor:pointer;accent-color:var(--brand-l);margin-top:5px;flex:0 0 auto}
+  .qc-no{font-family:var(--mono);font-weight:900;color:var(--ink-2);font-size:13px;
+    padding-top:3px;flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .qc-q{font-size:15.5px;font-weight:800;line-height:1.55;flex:1;min-width:200px}
+  .qc-id{font-family:var(--mono);font-size:11px;color:#bcac92;font-weight:700;padding-top:5px}
+  .qc-act{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start}
+  .mini{cursor:pointer;font-family:var(--sans);font-weight:700;font-size:12.5px;white-space:nowrap;
+    padding:6px 11px;border-radius:999px;border:1.5px solid var(--edge);
+    background:rgba(255,255,255,.8);color:var(--brand);transition:.15s}
+  .mini:hover:not(:disabled){background:#fff;transform:translateY(-1px)}
+  .mini:disabled{opacity:.3;cursor:not-allowed}
+  .mini.danger{color:var(--red);border-color:rgba(178,45,42,.35)}
+  .mini.danger:hover:not(:disabled){background:var(--red);color:#fff}
+  .mini.key{font-family:var(--mono);padding:6px 9px}
+  .qc-opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:11px 0 0 27px}
+  .opt{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;line-height:1.6;
+    background:rgba(255,255,255,.62);border:1.5px solid var(--line-2);border-radius:11px;padding:7px 11px}
+  .opt b{font-family:var(--mono);font-weight:900;color:var(--ink-2);flex:0 0 auto}
+  .opt.ok{background:rgba(63,125,83,.11);border-color:rgba(63,125,83,.45)}
+  .opt.ok b{color:var(--ok)}
+  .opt .tag{margin-left:auto;font-size:10.5px;font-weight:900;color:var(--ok);
+    letter-spacing:.1em;white-space:nowrap;padding-top:2px}
+  .qc-foot{display:flex;gap:14px;align-items:flex-start;margin:11px 0 0 27px;flex-wrap:wrap}
+  .qc-expl{flex:1;min-width:230px;font-size:13px;color:var(--ink-2);line-height:1.7}
+  .qc-expl .noexpl{color:#c0b096;font-style:italic}
+  .lvcell{white-space:nowrap;display:flex;gap:4px}
+  .chip{cursor:pointer;padding:0;width:29px;height:29px;border-radius:10px;
+    border:2px solid var(--edge);background:rgba(255,255,255,.7);color:#b6a68c;
+    font-family:var(--sans);font-weight:900;font-size:13px;transition:.15s;flex:0 0 auto}
+  .chip:hover{transform:translateY(-1px);background:#fff}
+  .chip.on{color:#fff}
+  .chip.on.chip-0{background:var(--blue);border-color:var(--blue)}
+  .chip.on.chip-1{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+  .chip.on.chip-2{background:var(--red);border-color:var(--red)}
+  .chip.on.chip-3{background:var(--violet);border-color:var(--violet)}
+  .empty{padding:34px 16px;text-align:center;color:var(--ink-2);font-size:15px}
+
+  /* ====== 編輯視窗 ====== */
+  .mask{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+    padding:18px;background:rgba(43,29,22,.55);backdrop-filter:blur(3px)}
+  .mask[hidden]{display:none}
+  .dlg{width:min(780px,100%);max-height:92vh;overflow:auto;background:var(--surface);
+    border-radius:22px;padding:clamp(18px,2.6vh,28px) clamp(18px,2.4vw,30px);
+    box-shadow:0 14px 0 rgba(90,28,13,.4)}
+  .dlg-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .dlg h2{margin-bottom:0}
+  .dlg-id{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+  .field{margin-bottom:15px}
+  .field > .lab{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .field .lab b{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-2);font-weight:700}
+  .field .lab .sub{font-size:12px;color:#a3917a}
+  .field .lab .req{color:var(--red);font-size:11px;font-weight:800}
+  .field .lab .count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+  .dlg input[type=text],.dlg textarea{width:100%;font-family:var(--sans);font-size:15px;line-height:1.7;
+    color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:12px;
+    padding:10px 14px;outline:none;transition:border-color .18s,background .18s}
+  .dlg input[type=text]:focus,.dlg textarea:focus{border-color:var(--signal);background:#fff}
+  .dlg textarea{font-family:var(--sans);border-radius:14px}
+  .optrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .anspick{display:inline-flex;align-items:center;gap:7px;cursor:pointer;flex:0 0 auto;
+    font-family:var(--mono);font-weight:900;font-size:14px;color:var(--ink-2);
+    background:rgba(255,255,255,.7);border:2px solid var(--edge);border-radius:12px;
+    padding:8px 12px;transition:.15s;user-select:none}
+  .anspick:hover{background:#fff}
+  .anspick input{accent-color:var(--ok);width:16px;height:16px;cursor:pointer}
+  .optrow.on .anspick{background:rgba(63,125,83,.14);border-color:var(--ok);color:var(--ok)}
+  .optrow.on input[type=text]{border-color:rgba(63,125,83,.5)}
+  .anshint{font-size:12px;color:var(--ink-2);margin-top:2px}
+  .dlg-foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px;
+    border-top:1.5px solid var(--line-2);padding-top:16px}
+  .dlg-foot .sep{flex:1;min-width:0}
+  .dlg .msg{margin:0;min-height:0}
+
+  details.adv{border:1.5px dashed rgba(154,59,22,.3);border-radius:16px;padding:0 16px;background:rgba(255,255,255,.4)}
+  details.adv[open]{padding-bottom:16px}
+  details.adv > summary{cursor:pointer;font-weight:800;font-size:15px;color:var(--brand);
+    padding:14px 2px;list-style:none;display:flex;align-items:center;gap:8px}
+  details.adv > summary::-webkit-details-marker{display:none}
+  details.adv > summary::before{content:"▸";font-size:13px;transition:transform .18s}
+  details.adv[open] > summary::before{transform:rotate(90deg)}
+  details.adv > summary small{font-weight:600;color:var(--ink-2);font-size:12.5px}
+
+  /* ====== 表格(排行榜) ====== */
+  .tablewrap{max-height:400px;overflow:auto;border-radius:16px;background:var(--paper);
+    box-shadow:inset 0 0 0 1.5px var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-2);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.45)}
+  tbody tr:hover{background:#fff}
+  th{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-2);background:#f7ecd6;position:sticky;top:0;z-index:1;
+    box-shadow:inset 0 -1.5px 0 var(--line)}
+  #boardTable td.rk{font-family:var(--mono);font-weight:900;color:var(--ink-2);width:44px;
+    font-variant-numeric:tabular-nums}
+  #boardTable td.nm{font-weight:800}
+  #boardTable td.sc{font-family:var(--mono);font-weight:900;font-size:17px;font-variant-numeric:tabular-nums}
+  #boardTable tr.top1{background:#fdf3dc}
+  #boardTable tr.top1 td.rk,#boardTable tr.top1 td.sc{color:var(--signal-d)}
+  .tg{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-2);
+    border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
+
+  @media (max-width:900px){
+    .stats{grid-template-columns:1fr 1fr}
+    .lv-toolbar .sep{display:none}
+    .qc-opts{grid-template-columns:1fr;margin-left:0}
+    .qc-foot{margin-left:0}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="deck-bar">
+  <div class="mark">
+    <span class="dot"></span>
+    <div>佛學知識王　後台管理<small>Admin · 題庫管理</small></div>
+  </div>
+  <a class="ghost" href="/" target="_blank">開啟遊戲頁 ↗</a>
+</div>
+
+<div class="wrap">
+  <div class="idx">00 — Overview</div>
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">—</div><div class="l">題目總數</div></div>
+    <div class="stat l1"><div class="n" id="stL1">—</div><div class="l">煩惱診療室</div></div>
+    <div class="stat l2"><div class="n" id="stL2">—</div><div class="l">熟悉又陌生的詞彙</div></div>
+    <div class="stat l3"><div class="n" id="stL3">—</div><div class="l">翻轉傳統迷思</div></div>
+    <div class="stat l4"><div class="n" id="stL4">—</div><div class="l">佛系密碼大解謎</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="idx">01 — Question Bank</div>
+    <h2>題庫管理</h2>
+    <p class="note">
+      每一題都可以單獨<b>新增、編輯、複製、刪除</b>,改完立刻寫進資料庫,不用整批儲存。
+      題目順序用 <b>↑ ↓</b> 調整;一題可以同時屬於多個分類。
+    </p>
+
+    <div class="bank-bar">
+      <button class="cta sm" onclick="Admin.openEditor(null)">＋ 新增題目</button>
+      <label class="search">
+        <span class="ico">⌕</span>
+        <input type="text" id="kw" placeholder="搜尋題目、選項或解說…" oninput="Admin.search(this.value)">
+      </label>
+      <button class="ghost sm" onclick="Admin.reload()">↻ 重新讀取</button>
+    </div>
+
+    <div class="filter-row">
+      <span class="lbl mono" style="font-size:11px;letter-spacing:.14em;color:var(--ink-2);font-weight:700">篩選</span>
+      <button class="lp active" data-filter="" onclick="Admin.filter('')">全部<span class="cnt" data-cnt="all"></span></button>
+      <span id="filterPills" style="display:contents"></span>
+      <span class="listinfo" id="listInfo"></span>
+    </div>
+
+    <div class="lv-toolbar">
+      <span class="lbl">勾選的題目</span>
+      <span class="grp" id="bulkAdd">加入</span>
+      <span class="grp" id="bulkDel">移出</span>
+      <span class="sep"></span>
+      <button class="ghost sm" onclick="Admin.toggleAll(true)">全選</button>
+      <button class="ghost sm" onclick="Admin.toggleAll(false)">取消</button>
+      <button class="ghost sm danger" onclick="Admin.deleteChecked()">🗑 刪除勾選</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+    <div class="qlist" id="qlist"></div>
+  </div>
+
+  <div class="panel">
+    <div class="idx">02 — Backup &amp; Bulk Edit</div>
+    <h2>備份與整批編輯</h2>
+    <details class="adv">
+      <summary>展開整批文字編輯 <small>(一次貼上大量題目、下載備份、匯入檔案、還原預設題庫)</small></summary>
+      <div class="hint">
+        每行一題,用「<b>｜</b>」(或半形 <b>|</b>)分隔,<b>6 到 8 欄</b>:<br>
+        <code>題目｜選項A｜選項B｜選項C｜選項D｜正解｜分類｜解說</code><br>
+        正解填 <b>A / B / C / D</b>(也可填 1~4)。<b>分類</b>可填完整名稱,也可填 <b>1~4</b> 或 <b>煩 / 詞 / 迷 / 密</b>;
+        一題要屬於多個分類就用 <b>/</b> 分隔,例如 <code>…｜B｜煩惱診療室/翻轉傳統迷思</code>。<br>
+        以 <b>#</b> 開頭或空白行會被忽略。<b>按下「儲存到資料庫」會用這裡的內容覆蓋整個題庫。</b>
+      </div>
+      <textarea id="bankText" spellcheck="false" placeholder="讀取中…"></textarea>
+      <div id="bmsg2" class="msg"></div>
+      <div class="actions">
+        <button class="cta sm" onclick="Admin.saveBulk()">儲存到資料庫 →</button>
+        <button class="ghost" onclick="Admin.reload()">↻ 重新讀取</button>
+        <button class="ghost" onclick="Admin.exportFile()">⬇ 下載備份</button>
+        <label class="ghost">⬆ 匯入檔案
+          <input type="file" id="importFile" accept=".txt,.csv" style="display:none" onchange="Admin.importFile(event)">
+        </label>
+        <button class="ghost danger" onclick="Admin.reset()">↺ 還原預設題庫</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel">
+    <div class="idx">03 — Leaderboard</div>
+    <h2>排行榜管理</h2>
+    <p class="note">玩家單局成績存在資料庫 <b>scores</b> 表,每個分類各取前 20 名顯示在遊戲結束畫面。</p>
+    <div class="lv-toolbar">
+      <span class="lbl">檢視分類</span>
+      <span class="grp" id="boardPills"></span>
+      <span class="sep"></span>
+      <button class="ghost sm" onclick="Admin.board()">↻ 重新讀取</button>
+      <button class="ghost sm danger" onclick="Admin.clearBoard('level')">清空此分類</button>
+      <button class="ghost sm danger" onclick="Admin.clearBoard('all')">清空全部排行榜</button>
+    </div>
+    <div id="bmsg" class="msg"></div>
+    <div class="tablewrap">
+      <table id="boardTable">
+        <thead><tr>
+          <th class="no">#</th><th>玩家名</th><th>分數</th><th>模式</th><th>答對</th><th>最高連擊</th><th>時間</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 單題編輯視窗:每個資料庫欄位一格 ====== -->
+<div class="mask" id="mask" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <div class="dlg-head">
+      <h2 id="dlgTitle">編輯題目</h2>
+      <span class="dlg-id" id="dlgId"></span>
+    </div>
+
+    <div class="field">
+      <div class="lab"><b>題目 Question</b><span class="req">必填</span>
+        <span class="count" id="cQ">0 / 300</span></div>
+      <textarea id="fQ" rows="3" maxlength="300" placeholder="例如:佛教所說的「三寶」是指?"></textarea>
+    </div>
+
+    <div class="field">
+      <div class="lab"><b>四個選項 Options</b><span class="req">必填</span>
+        <span class="sub">左邊圓鈕＝這一題的正解</span></div>
+      <div id="optRows"></div>
+      <div class="anshint">遊戲進行時選項會自動打亂順序,不用擔心正解固定在同一個位置。</div>
+    </div>
+
+    <div class="field">
+      <div class="lab"><b>分類 Category</b>
+        <span class="sub">可複選;沒選的話會自動放進「煩惱診療室」</span></div>
+      <div class="grp" id="fLv" style="gap:8px;flex-wrap:wrap"></div>
+    </div>
+
+    <div class="field">
+      <div class="lab"><b>解說 Explanation</b>
+        <span class="sub">玩家答完這一題會看到,可留空</span>
+        <span class="count" id="cE">0 / 500</span></div>
+      <textarea id="fE" rows="4" maxlength="500" placeholder="例如:佛是覺悟者,法是佛所說的道理,僧是依法修行的僧團,合稱三寶。"></textarea>
+    </div>
+
+    <div class="dlg-foot">
+      <div class="msg" id="dlgMsg"></div>
+      <span class="sep"></span>
+      <button class="ghost" onclick="Admin.closeEditor()">取消</button>
+      <button class="cta sm" onclick="Admin.saveEditor()">儲存 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LETTERS = ["A","B","C","D"];
+const LEVELS = ["煩惱診療室","熟悉又陌生的詞彙","翻轉傳統迷思","佛系密碼大解謎"];
+const LVSHORT = {"煩惱診療室":"煩","熟悉又陌生的詞彙":"詞","翻轉傳統迷思":"迷","佛系密碼大解謎":"密"};
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function normOne(v){
+  const s=String(v||"").trim();
+  if(LEVELS.includes(s)) return s;
+  if(s==="煩"||s==="1"||s==="生活情境") return LEVELS[0];
+  if(s==="詞"||s==="2"||s==="日常用語") return LEVELS[1];
+  if(s==="迷"||s==="3"||s==="民俗觀念") return LEVELS[2];
+  if(s==="密"||s==="4"||s==="專有名詞") return LEVELS[3];
+  return null;
+}
+// 字串/陣列 → 分類陣列(可多個,去重、依分類順序排序)
+function parseLvs(v){
+  const parts = Array.isArray(v) ? v : String(v||"").split(/[,\/、+\s]+/);
+  const set = new Set();
+  parts.forEach(p=>{ const l=normOne(p); if(l) set.add(l); });
+  return LEVELS.filter(l=>set.has(l));
+}
+
+/* ---- 文字 <-> 題庫(整批編輯用) ---- */
+function toText(list){
+  return list.map(x => [x.q, ...x.o, LETTERS[x.a], (x.lv||[]).join("/"), x.e||""].join("｜")).join("\n");
+}
+function parse(text){
+  const list=[], errors=[];
+  text.split(/\r?\n/).forEach((raw,i)=>{
+    const line=raw.trim();
+    if(!line || line.startsWith("#")) return;
+    const cols=line.split(/[｜|]/).map(s=>s.trim());
+    if(cols.length<6 || cols.length>8){
+      errors.push(`第 ${i+1} 行:需要 6~8 欄,實際 ${cols.length} 欄`); return;
+    }
+    const [q,a,b,cc,d,ans,lv,ex]=cols;
+    if(!q || !a || !b || !cc || !d){ errors.push(`第 ${i+1} 行:題目或選項不可空白`); return; }
+    let ai = "ABCD".indexOf(String(ans).toUpperCase());
+    if(ai<0) ai = ["1","2","3","4"].indexOf(ans);
+    if(ai<0){ errors.push(`第 ${i+1} 行:正解「${ans}」須為 A~D 或 1~4`); return; }
+    list.push({q, o:[a,b,cc,d], a:ai, lv:parseLvs(lv), e:(ex||"").trim()});
+  });
+  return {list, errors};
+}
+
+const Admin = (() => {
+  let current = [];              // 資料庫裡的全部題目
+  let fCat = "";                 // 篩選:分類
+  let fKw = "";                  // 篩選:關鍵字
+  let editing = null;            // 正在編輯的題目 id;null = 新增
+  let flashId = null;            // 剛存檔的題目,渲染後閃一下
+
+  const setMsg  = (t,c) => { const e=$("msg");  e.className="msg "+(c||""); e.textContent=t; };
+  const setMsg2 = (t,c) => { const e=$("bmsg2");e.className="msg "+(c||""); e.textContent=t; };
+
+  async function api(url, opt){
+    const r = await fetch(url, opt);
+    let d = {};
+    try{ d = await r.json(); }catch(e){}
+    if(!r.ok) throw new Error(d.error || "伺服器回應 "+r.status);
+    return d;
+  }
+
+  /* ---------- 讀取與渲染 ---------- */
+  async function reload(){
+    try{
+      const d = await api("/api/questions");
+      current = d.questions;
+      $("bankText").value = toText(current);
+      render();
+      setMsg("");
+    }catch(e){
+      setMsg("無法連線到伺服器,請確認 server.js 已啟動。","err");
+    }
+  }
+
+  function counts(){
+    const c = {}; LEVELS.forEach(l => c[l]=0);
+    current.forEach(x => (x.lv||[]).forEach(l => { if(c[l]!==undefined) c[l]++; }));
+    return c;
+  }
+
+  function render(){
+    const c = counts();
+    $("stTotal").textContent = current.length;
+    LEVELS.forEach((l,i) => { $("stL"+(i+1)).textContent = c[l]; });
+    document.querySelector('[data-cnt="all"]').textContent = " ("+current.length+")";
+    LEVELS.forEach(l => {
+      const s = document.querySelector(`[data-cnt="${l}"]`);
+      if(s) s.textContent = " ("+c[l]+")";
+    });
+
+    const kw = fKw.trim().toLowerCase();
+    const shown = current.filter(x => {
+      if(fCat && !(x.lv||[]).includes(fCat)) return false;
+      if(!kw) return true;
+      return (x.q + " " + x.o.join(" ") + " " + (x.e||"")).toLowerCase().includes(kw);
+    });
+    $("listInfo").textContent = shown.length === current.length
+      ? `共 ${current.length} 題`
+      : `顯示 ${shown.length} / ${current.length} 題`;
+
+    const box = $("qlist");
+    if(!shown.length){
+      box.innerHTML = `<div class="empty">${current.length ? "沒有符合條件的題目,換個篩選或關鍵字試試。"
+        : "題庫是空的,按「＋ 新增題目」開始建立。"}</div>`;
+      return;
+    }
+    box.innerHTML = shown.map(x => {
+      const no = current.indexOf(x) + 1;
+      const first = current.indexOf(x) === 0;
+      const last  = current.indexOf(x) === current.length-1;
+      const opts = x.o.map((o,j) => `<div class="opt${j===x.a?" ok":""}"><b>${LETTERS[j]}</b>
+          <span>${esc(o)}</span>${j===x.a?'<span class="tag">正解</span>':""}</div>`).join("");
+      const chips = LEVELS.map((lv,li) =>
+        `<button class="chip chip-${li}${(x.lv||[]).includes(lv)?" on":""}" title="${lv}"
+           data-act="chip" data-id="${x.id}" data-lv="${lv}">${LVSHORT[lv]}</button>`).join("");
+      return `<article class="qcard${flashId===x.id?" flash":""}" data-card="${x.id}">
+        <div class="qc-head">
+          <input type="checkbox" class="rowchk" value="${x.id}">
+          <span class="qc-no">${String(no).padStart(2,"0")}</span>
+          <h3 class="qc-q">${esc(x.q)}</h3>
+          <span class="qc-id">#${x.id}</span>
+          <div class="qc-act">
+            <button class="mini key" title="上移" data-act="up" data-id="${x.id}" ${first?"disabled":""}>↑</button>
+            <button class="mini key" title="下移" data-act="down" data-id="${x.id}" ${last?"disabled":""}>↓</button>
+            <button class="mini" data-act="edit" data-id="${x.id}">✎ 編輯</button>
+            <button class="mini" data-act="copy" data-id="${x.id}">⧉ 複製</button>
+            <button class="mini danger" data-act="del" data-id="${x.id}">🗑 刪除</button>
+          </div>
+        </div>
+        <div class="qc-opts">${opts}</div>
+        <div class="qc-foot">
+          <div class="qc-expl">${x.e ? esc(x.e) : '<span class="noexpl">(還沒寫解說)</span>'}</div>
+          <div class="lvcell">${chips}</div>
+        </div>
+      </article>`;
+    }).join("");
+
+    if(flashId){
+      const el = box.querySelector(`[data-card="${flashId}"]`);
+      if(el) el.scrollIntoView({block:"center", behavior:"smooth"});
+      flashId = null;
+    }
+  }
+
+  /* ---------- 篩選 ---------- */
+  function filter(cat){
+    fCat = cat;
+    document.querySelectorAll("[data-filter]").forEach(b =>
+      b.classList.toggle("active", b.dataset.filter === cat));
+    render();
+  }
+  function search(v){ fKw = v; render(); }
+
+  /* ---------- 單題:新增 / 編輯 ---------- */
+  function optRowHtml(i, val, checked){
+    return `<div class="optrow${checked?" on":""}" data-row="${i}">
+      <label class="anspick"><input type="radio" name="ans" value="${i}" ${checked?"checked":""}
+        onchange="Admin.pickAns(${i})">${LETTERS[i]}</label>
+      <input type="text" id="fO${i}" maxlength="200" value="${esc(val)}" placeholder="選項 ${LETTERS[i]} 的內容">
+    </div>`;
+  }
+  function pickAns(i){
+    document.querySelectorAll(".optrow").forEach(r =>
+      r.classList.toggle("on", Number(r.dataset.row) === i));
+  }
+  function lvPickHtml(sel){
+    return LEVELS.map(l =>
+      `<button type="button" class="lp${sel.includes(l)?" active":""}" data-level="${l}"
+         onclick="Admin.toggleFormLv(this)"><i class="sw"></i>${l}</button>`).join("");
+  }
+  function toggleFormLv(el){ el.classList.toggle("active"); }
+
+  function openEditor(id){
+    const x = id==null ? null : current.find(q => q.id === id);
+    editing = x ? x.id : null;
+    $("dlgTitle").textContent = x ? "編輯題目" : "新增題目";
+    $("dlgId").textContent = x ? `資料庫編號 #${x.id}` : "尚未存檔";
+    $("fQ").value = x ? x.q : "";
+    $("optRows").innerHTML = [0,1,2,3].map(i =>
+      optRowHtml(i, x ? x.o[i] : "", x ? x.a===i : i===0)).join("");
+    $("fLv").innerHTML = lvPickHtml(x ? (x.lv||[]) : [fCat || LEVELS[0]]);
+    $("fE").value = x ? (x.e||"") : "";
+    $("dlgMsg").textContent = ""; $("dlgMsg").className = "msg";
+    countChars();
+    $("mask").hidden = false;
+    document.body.style.overflow = "hidden";
+    setTimeout(() => $("fQ").focus(), 30);
+  }
+  function closeEditor(){
+    $("mask").hidden = true;
+    document.body.style.overflow = "";
+    editing = null;
+  }
+  function countChars(){
+    $("cQ").textContent = `${$("fQ").value.length} / 300`;
+    $("cE").textContent = `${$("fE").value.length} / 500`;
+  }
+  function readForm(){
+    const sel = document.querySelector('input[name="ans"]:checked');
+    return {
+      q: $("fQ").value.trim(),
+      o: [0,1,2,3].map(i => $("fO"+i).value.trim()),
+      a: sel ? Number(sel.value) : -1,
+      lv: [...$("fLv").querySelectorAll(".lp.active")].map(b => b.dataset.level),
+      e: $("fE").value.trim(),
+    };
+  }
+  async function saveEditor(){
+    const x = readForm();
+    const dm = $("dlgMsg");
+    const bad = !x.q ? "題目不可空白"
+      : x.o.some(o => !o) ? "四個選項都要填寫"
+      : (x.a < 0 ? "請選一個正解(A~D)" : null);
+    if(bad){ dm.className="msg err"; dm.textContent = bad; return; }
+    try{
+      const opt = { headers:{"Content-Type":"application/json"}, body:JSON.stringify(x) };
+      const d = editing == null
+        ? await api("/api/questions", {method:"POST", ...opt})
+        : await api("/api/questions/"+editing, {method:"PUT", ...opt});
+      const isNew = editing == null;
+      flashId = d.question.id;
+      closeEditor();
+      await reload();
+      setMsg(isNew ? `✓ 已新增題目 #${d.question.id}。` : `✓ 已更新題目 #${d.question.id}。`, "ok");
+    }catch(e){ dm.className="msg err"; dm.textContent = "儲存失敗:"+e.message; }
+  }
+
+  async function del(id){
+    const x = current.find(q => q.id === id); if(!x) return;
+    if(!confirm(`確定刪除這一題嗎?\n\n${x.q}\n\n刪除後無法復原。`)) return;
+    try{
+      await api("/api/questions/"+id, {method:"DELETE"});
+      await reload();
+      setMsg("✓ 已刪除 1 題。","ok");
+    }catch(e){ setMsg("刪除失敗:"+e.message,"err"); }
+  }
+  async function copy(id){
+    try{
+      const d = await api("/api/questions/"+id+"/copy", {method:"POST"});
+      flashId = d.question.id;
+      await reload();
+      setMsg(`✓ 已複製成新的一題 #${d.question.id},可以直接編輯。`,"ok");
+    }catch(e){ setMsg("複製失敗:"+e.message,"err"); }
+  }
+  async function move(id, dir){
+    try{
+      await api("/api/questions/"+id+"/move",
+        {method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({dir})});
+      flashId = id;
+      await reload();
+      setMsg("");
+    }catch(e){ setMsg("調整順序失敗:"+e.message,"err"); }
+  }
+
+  /* ---------- 分類:單題切換 / 批次加入移出 ---------- */
+  async function apiLevel(ids, level, mode){
+    try{
+      await api("/api/questions/level",{
+        method:"PUT", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ids, level, mode})});
+      return true;
+    }catch(e){ setMsg("設定失敗:"+e.message,"err"); return false; }
+  }
+  async function toggleRow(id, lv){
+    const x = current.find(q => q.id === id); if(!x) return;
+    const has = (x.lv||[]).includes(lv);
+    if(await apiLevel([id], lv, has?"remove":"add")){
+      x.lv = has ? x.lv.filter(l => l!==lv) : LEVELS.filter(l => x.lv.includes(l) || l===lv);
+      render();
+      setMsg(`✓ 已將此題${has?"移出":"加入"}「${lv}」分類。`,"ok");
+    }
+  }
+  function checkedIds(){
+    return [...document.querySelectorAll("#qlist .rowchk:checked")]
+      .map(c => parseInt(c.value)).filter(Number.isInteger);
+  }
+  async function assign(level, mode){
+    const ids = checkedIds();
+    if(!ids.length){ setMsg("請先勾選題目(卡片左上角的方框)。","err"); return; }
+    if(await apiLevel(ids, level, mode)){
+      await reload();
+      setMsg(`✓ 已將 ${ids.length} 題${mode==="remove"?"移出":"加入"}「${level}」分類。`,"ok");
+    }
+  }
+  function toggleAll(on){
+    document.querySelectorAll("#qlist .rowchk").forEach(c => c.checked = on);
+  }
+  async function deleteChecked(){
+    const ids = checkedIds();
+    if(!ids.length){ setMsg("請先勾選要刪除的題目。","err"); return; }
+    if(ids.length >= current.length){ setMsg("題庫至少要保留 1 題,不能全部刪除。","err"); return; }
+    if(!confirm(`確定刪除勾選的 ${ids.length} 題嗎?\n刪除後無法復原。`)) return;
+    let ok = 0;
+    for(const id of ids){
+      try{ await api("/api/questions/"+id, {method:"DELETE"}); ok++; }catch(e){}
+    }
+    await reload();
+    setMsg(`✓ 已刪除 ${ok} 題。`, ok ? "ok" : "err");
+  }
+
+  /* ---------- 整批文字編輯 ---------- */
+  async function saveBulk(){
+    const {list, errors} = parse($("bankText").value);
+    if(errors.length){
+      setMsg2("尚未儲存,請修正以下問題:\n• " + errors.slice(0,10).join("\n• ")
+        + (errors.length>10?`\n…等 ${errors.length} 項`:""), "err");
+      return;
+    }
+    if(list.length<2){ setMsg2("題庫至少需要 2 題。","err"); return; }
+    if(!confirm(`這會用文字框的內容覆蓋整個題庫(${list.length} 題),現有題目會被取代。\n確定要儲存嗎?`)) return;
+    try{
+      const d = await api("/api/questions/bulk",{
+        method:"PUT", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({questions:list})});
+      await reload();
+      setMsg2(`✓ 已儲存到資料庫,共 ${d.count} 題。`,"ok");
+    }catch(e){ setMsg2("儲存失敗:"+e.message,"err"); }
+  }
+  async function reset(){
+    if(!confirm("確定要還原成預設題庫嗎?\n資料庫現有題目將被覆蓋(未下載備份的部分會消失)。")) return;
+    try{
+      const d = await api("/api/reset",{method:"POST"});
+      await reload();
+      setMsg2(`✓ 已還原為預設題庫,共 ${d.count} 題。`,"ok");
+    }catch(e){ setMsg2("還原失敗:"+e.message,"err"); }
+  }
+  function exportFile(){
+    const {list, errors} = parse($("bankText").value);
+    const text = errors.length ? $("bankText").value : toText(list);
+    const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`佛學題庫_${new Date().toISOString().slice(0,10)}.txt`; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function importFile(ev){
+    const file = ev.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { $("bankText").value = e.target.result;
+      setMsg2("✓ 已載入檔案,請確認後按「儲存到資料庫」。","ok"); };
+    reader.readAsText(file, "utf-8");
+    ev.target.value="";
+  }
+
+  /* ---------- 排行榜 ---------- */
+  let boardLevel = LEVELS[0];
+  const setBMsg = (t,c) => { const e=$("bmsg"); e.className="msg "+(c||""); e.textContent=t; };
+
+  async function board(level){
+    if(level) boardLevel = level;
+    document.querySelectorAll("#boardPills .lp").forEach(b =>
+      b.classList.toggle("active", b.dataset.level === boardLevel));
+    const tb = $("boardTable").querySelector("tbody");
+    try{
+      const d = await api("/api/leaderboard?level="+encodeURIComponent(boardLevel));
+      tb.innerHTML = d.top.length
+        ? d.top.map((x,i)=>`<tr class="${i===0?"top1":""}">
+            <td class="rk">${i+1}</td>
+            <td class="nm">${esc(x.name)}</td>
+            <td class="sc">${x.score}</td>
+            <td><span class="tg">${x.mode==="duel"?"雙人對決":"單人挑戰"}</span></td>
+            <td class="mono">${x.correct}/${x.total}</td>
+            <td class="mono">${x.combo}</td>
+            <td class="mono" style="color:var(--ink-2);font-size:12px">${esc(x.at||"")}</td></tr>`).join("")
+        : `<tr><td colspan="7" class="empty">「${esc(boardLevel)}」目前還沒有人上榜</td></tr>`;
+      setBMsg(`「${boardLevel}」共 ${d.count} 筆上榜紀錄`+(d.top1?`,榜首 ${d.top1} 分。`:"。"),"ok");
+    }catch(e){ setBMsg("排行榜讀取失敗:"+e.message,"err"); }
+  }
+  async function clearBoard(scope){
+    const all = scope === "all";
+    const what = all ? "全部分類" : `「${boardLevel}」`;
+    if(!confirm(`確定要清空 ${what} 的排行榜嗎?\n刪除後無法復原。`)) return;
+    try{
+      const q = all ? "" : "?level="+encodeURIComponent(boardLevel);
+      const d = await api("/api/leaderboard"+q, { method:"DELETE" });
+      await board();
+      setBMsg(`✓ 已清空 ${what} 的排行榜,刪除 ${d.deleted} 筆。`,"ok");
+    }catch(e){ setBMsg("清空失敗:"+e.message,"err"); }
+  }
+
+  /* ---------- 起始 ---------- */
+  function buildPills(){
+    $("filterPills").innerHTML = LEVELS.map(l =>
+      `<button class="lp" data-level="${l}" data-filter="${l}" onclick="Admin.filter('${l}')">
+         <i class="sw"></i>${l}<span class="cnt" data-cnt="${l}"></span></button>`).join("");
+    $("bulkAdd").insertAdjacentHTML("beforeend", LEVELS.map(l =>
+      `<button class="lp" data-level="${l}" onclick="Admin.assign('${l}','add')"><i class="sw"></i>${l}</button>`).join(""));
+    $("bulkDel").insertAdjacentHTML("beforeend", LEVELS.map(l =>
+      `<button class="lp" data-level="${l}" onclick="Admin.assign('${l}','remove')"><i class="sw"></i>${l}</button>`).join(""));
+    $("boardPills").innerHTML = LEVELS.map(l =>
+      `<button class="lp" data-level="${l}" onclick="Admin.board('${l}')"><i class="sw"></i>${l}</button>`).join("");
+  }
+
+  function init(){
+    buildPills();
+    // 卡片上的按鈕統一在這裡處理
+    $("qlist").addEventListener("click", ev => {
+      const b = ev.target.closest("[data-act]"); if(!b) return;
+      const id = parseInt(b.dataset.id);
+      const act = b.dataset.act;
+      if(act === "edit") openEditor(id);
+      else if(act === "del") del(id);
+      else if(act === "copy") copy(id);
+      else if(act === "up" || act === "down") move(id, act);
+      else if(act === "chip") toggleRow(id, b.dataset.lv);
+    });
+    $("fQ").addEventListener("input", countChars);
+    $("fE").addEventListener("input", countChars);
+    $("mask").addEventListener("mousedown", ev => { if(ev.target === $("mask")) closeEditor(); });
+    document.addEventListener("keydown", ev => {
+      if($("mask").hidden) return;
+      if(ev.key === "Escape") closeEditor();
+      if(ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) saveEditor();
+    });
+    reload();
+    board();
+  }
+
+  return { init, reload, filter, search, openEditor, closeEditor, saveEditor, pickAns, toggleFormLv,
+           assign, toggleAll, deleteChecked, saveBulk, reset, exportFile, importFile,
+           board, clearBoard };
+})();
+
+Admin.init();
+</script>
+</body>
+</html>

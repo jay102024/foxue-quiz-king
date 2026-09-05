@@ -1,0 +1,17 @@
+# Node 執行環境(89MB,不進版控;需要免安裝版請自行放入 node.exe / node-mac)
+runtime/
+
+# 執行時產生的資料庫(內含本機成績,首次啟動會自動重建)
+foxue.db
+
+# PlatformIO / VSCode
+quiz_ranger_button/.pio/
+quiz_ranger_button/.vscode/.browse.c_cpp.db*
+quiz_ranger_button/.vscode/c_cpp_properties.json
+quiz_ranger_button/.vscode/launch.json
+quiz_ranger_button/.vscode/ipch/
+
+# 作業系統雜項
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>佛學知識王</title>
+<style>
+  :root{
+    --ink:#141416;
+    --ink-2:#6a6660;
+    --paper:#e8e5dd;
+    --surface:#fbfaf7;
+    --line:#dcd7cc;
+    --line-2:#ece8df;
+    --signal:#ff521f;   /* 破格信號橙 */
+    --blue:#1b52ef;     /* P1 · 初階 */
+    --yellow:#f4b800;   /* 中階 */
+    --red:#e5352b;      /* P2 · 高階 */
+    --ok:#0f9d58;
+    --sans:"Helvetica Neue","Segoe UI Variable Text","Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",Arial,sans-serif;
+    --mono:"SFMono-Regular","Roboto Mono",ui-monospace,Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);color:var(--ink);
+    background:#161719;
+    background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px);
+    background-size:22px 22px;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    display:grid;place-items:center;padding:clamp(14px,3vw,40px);
+  }
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+  .stage{width:100%;max-width:1000px}
+  .device{
+    position:relative;background:var(--surface);
+    border-radius:clamp(20px,2.4vw,30px);
+    padding:clamp(22px,3.2vw,44px);overflow:hidden;
+    box-shadow:0 60px 130px -34px rgba(0,0,0,.72), 0 2px 0 rgba(255,255,255,.6) inset;
+    background-image:
+      linear-gradient(0deg,rgba(20,20,22,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(20,20,22,.018) 1px,transparent 1px);
+    background-size:32px 32px;
+  }
+  /* 破格:右上切角信號塊 */
+  .device::after{content:"";position:absolute;top:-52px;right:-52px;width:92px;height:92px;
+    background:var(--signal);transform:rotate(45deg);pointer-events:none}
+
+  /* 控制面板頂欄(常駐) */
+  .deck-bar{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding-bottom:14px;margin-bottom:clamp(18px,2.6vw,30px);border-bottom:3px solid var(--ink)}
+  .deck-bar::after{content:"";position:absolute;left:0;bottom:-3px;width:84px;height:3px;background:var(--signal)}
+  .deck-bar .mark{display:flex;align-items:center;gap:11px;font-weight:800;font-size:17px;letter-spacing:.01em}
+  .deck-bar .mark .dot{width:12px;height:12px;border-radius:50%;background:var(--signal);
+    box-shadow:0 0 0 4px rgba(255,82,31,.18)}
+  .deck-bar .mark .mono{font-size:11px;color:var(--ink-2);letter-spacing:.14em;font-weight:600}
+  .deck-bar .meta{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.14em;text-transform:uppercase}
+
+  .screens{position:relative;min-height:clamp(360px,52vh,520px);display:flex;flex-direction:column;justify-content:center}
+  .screen{position:relative}
+  .idx{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--signal);text-transform:uppercase;margin-bottom:14px}
+  .back-link{position:absolute;top:-4px;right:0;z-index:10}
+
+  /* 按鈕 */
+  .cta{font-family:var(--sans);font-weight:800;font-size:18px;cursor:pointer;color:#fff;background:var(--ink);
+    border:none;border-radius:14px;padding:16px 30px;letter-spacing:.02em;
+    box-shadow:0 4px 0 #000;transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,background .22s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 7px 0 #000;background:var(--signal)}
+  .cta:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
+  .ghost{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+    background:none;border:1.5px solid var(--line);border-radius:10px;padding:9px 15px;color:var(--ink-2);
+    transition:border-color .22s,color .22s}
+  .ghost:hover{border-color:var(--ink);color:var(--ink)}
+
+  /* ---- 模式選擇 ---- */
+  .grid-mode{display:grid;grid-template-columns:.85fr 1.15fr;gap:clamp(24px,4vw,56px);align-items:center}
+  .mega{font-size:clamp(46px,8.6vw,110px);line-height:.9;letter-spacing:-.03em;font-weight:800;color:var(--ink);
+    font-variation-settings:"wght" 850}
+  .lead{margin-top:18px;color:var(--ink-2);font-size:15px;line-height:1.7}
+  .lead .mono{display:block;margin-top:8px;font-size:12px;letter-spacing:.12em;color:var(--signal)}
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .tile{position:relative;display:flex;align-items:center;gap:16px;text-align:left;cursor:pointer;
+    background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:20px 22px 20px 28px;overflow:hidden;
+    transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,border-color .22s}
+  .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px}
+  .tile-solo::before{background:var(--blue)} .tile-duel::before{background:var(--red)}
+  .tile:hover{transform:translateY(-3px);box-shadow:0 12px 0 -3px var(--line);border-color:var(--ink)}
+  .tile-no{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
+  .tile-ic{display:grid;place-items:center;width:40px;height:40px;flex:0 0 40px}
+  .tile-ic svg{display:block}
+  .tile-solo .tile-ic{color:var(--blue)}
+  .tile-duel .tile-ic{color:var(--red)}
+  .tile-body{flex:1;min-width:0}
+  .tile-body b{display:block;font-size:22px;letter-spacing:.06em}
+  .tile-body small{color:var(--ink-2);font-size:13px}
+  .tile-arrow{font-size:22px;color:var(--ink-2);transition:transform .22s,color .22s}
+  .tile:hover .tile-arrow{transform:translateX(5px);color:var(--signal)}
+
+  /* ---- 表單型畫面(單人規則) ---- */
+  .form-head{margin-bottom:20px}
+  .big{font-size:clamp(34px,5.4vw,56px);line-height:1;letter-spacing:-.02em;font-weight:800;
+    font-variation-settings:"wght" 820}
+  .spec{border-top:1px solid var(--line);margin-bottom:6px}
+  .spec-row{display:flex;gap:16px;align-items:baseline;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .spec-row .k{flex:0 0 116px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-2);text-transform:uppercase}
+  .spec-row .v{color:var(--ink);font-size:15px}
+  .spec-row .v b{color:var(--signal)}
+
+  /* ---- 題組選擇 ---- */
+  .level-pick{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:22px 0}
+  .lp-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-2);text-transform:uppercase;margin-right:2px}
+  .lp{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--sans);font-weight:700;font-size:15px;
+    padding:10px 16px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);
+    transition:transform .2s cubic-bezier(.2,.7,.2,1),border-color .2s,box-shadow .2s}
+  .lp .sw{width:12px;height:12px;border-radius:3px;flex:0 0 12px}
+  .lp[data-level="初階"] .sw{background:var(--blue)}
+  .lp[data-level="中階"] .sw{background:var(--yellow)}
+  .lp[data-level="高階"] .sw{background:var(--red)}
+  .lp:hover:not(:disabled){transform:translateY(-2px)}
+  .lp.active{border-color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+  .lp.active[data-level="初階"]{border-color:var(--blue);box-shadow:0 3px 0 var(--blue)}
+  .lp.active[data-level="中階"]{border-color:var(--yellow);box-shadow:0 3px 0 var(--yellow)}
+  .lp.active[data-level="高階"]{border-color:var(--red);box-shadow:0 3px 0 var(--red)}
+  .lp:disabled{opacity:.38;cursor:not-allowed}
+  .lp-count{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+
+  /* ---- 單人:遊玩 HUD ---- */
+  .play-hud{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .hud-q{display:flex;align-items:baseline;gap:6px}
+  .hud-q .huge{font-family:var(--mono);font-size:clamp(34px,6vw,48px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .hud-q .slash,.hud-q #qTotal{font-family:var(--mono);font-size:24px;color:var(--ink-2)}
+  .hud-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+  .hud-q .hud-lbl{align-self:center;margin-left:8px}
+  .hud-cat{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#fff;background:var(--ink);
+    padding:6px 12px;border-radius:8px;align-self:center}
+  .hud-stats{display:flex;gap:24px}
+  .stat-mini{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .stat-mini .num{font-family:var(--mono);font-size:28px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+
+  .timer-wrap{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:18px 0}
+  .timer-bar{height:100%;width:100%;background:var(--signal)}
+
+  .question{font-size:clamp(21px,2.9vw,29px);line-height:1.5;font-weight:700;color:var(--ink);
+    min-height:88px;display:flex;align-items:center;margin-top:6px}
+
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  .opt{display:flex;align-items:center;gap:14px;text-align:left;cursor:pointer;width:100%;
+    background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:16px 18px;
+    font-family:var(--sans);font-size:18px;color:var(--ink);box-shadow:0 3px 0 var(--line);
+    transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s,border-color .2s,background .2s}
+  .opt:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 0 var(--line)}
+  .opt:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 var(--line)}
+  .opt .tag{flex:0 0 34px;height:34px;border-radius:9px;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:16px;color:#fff}
+  .options .opt:nth-child(1) .tag,.opt.n0 .tag{background:var(--blue)}
+  .options .opt:nth-child(2) .tag{background:var(--red)}
+  .options .opt:nth-child(3) .tag{background:var(--yellow);color:#1c1500}
+  .options .opt:nth-child(4) .tag{background:var(--ink)}
+  .opt.correct{border-color:var(--ok);background:rgba(15,157,88,.10);box-shadow:0 3px 0 rgba(15,157,88,.35)}
+  .opt.correct .tag{background:var(--ok);color:#fff}
+  .opt.wrong{border-color:var(--red);background:rgba(229,53,43,.10);box-shadow:0 3px 0 rgba(229,53,43,.35)}
+  .opt.wrong .tag{background:var(--red);color:#fff}
+  .opt.dim{opacity:.42}
+  .opt:disabled{cursor:default}
+
+  .feedback{margin-top:18px;min-height:26px;font-size:16px;font-weight:600;letter-spacing:.01em}
+  .feedback.good{color:var(--ok)} .feedback.bad{color:var(--red)}
+  .gain{font-family:var(--mono);color:var(--signal);font-weight:700}
+  .combo{display:inline-block;color:var(--signal);transition:transform .2s}
+  .combo.pop{transform:scale(1.35)}
+
+  /* ---- 結果 ---- */
+  .res-head{margin-bottom:22px}
+  .rank-title{font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-.01em;line-height:1;color:var(--ink)}
+  .rank-sub{margin-top:10px;color:var(--ink-2);font-size:15px;line-height:1.6;max-width:54ch}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:8px 0 26px}
+  .stat{border:1.5px solid var(--line);border-radius:16px;padding:20px;background:#fff;position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;left:0;top:0;height:6px;width:38px;background:var(--signal)}
+  .stat .n{font-family:var(--mono);font-size:clamp(28px,4vw,40px);font-weight:800;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
+  .stat .l{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink-2);margin-top:8px;text-transform:uppercase}
+  .res-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+
+  /* ---- 對決:按鈕測試盤 ---- */
+  .pads{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0 6px}
+  .pad{border:1.5px solid var(--line);border-radius:18px;padding:16px;background:var(--surface)}
+  .pad h4{font-family:var(--mono);letter-spacing:.06em;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:9px}
+  .pad h4::before{content:"";width:12px;height:12px;border-radius:3px}
+  .pad.p1 h4{color:var(--blue)} .pad.p1 h4::before{background:var(--blue)}
+  .pad.p2 h4{color:var(--red)} .pad.p2 h4::before{background:var(--red)}
+  .pad h4 .mono{color:var(--ink-2);font-size:11px;margin-left:auto}
+  .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .key{aspect-ratio:1/1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#fff;border:1.5px solid var(--line);box-shadow:0 3px 0 var(--line);
+    font-family:var(--mono);font-weight:700;font-size:22px;color:var(--ink);
+    transition:transform .18s,box-shadow .18s,background .18s}
+  .key small{font-family:var(--sans);font-size:10px;color:var(--ink-2);font-weight:600;margin-top:3px}
+  .pad.p1 .key.hit{background:var(--blue);color:#fff;transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+  .pad.p2 .key.hit{background:var(--red);color:#fff;transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+  .pad .key.hit small{color:rgba(255,255,255,.85)}
+
+  /* ---- 對決:戰鬥布景 ---- */
+  .duel-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .fighter{flex:1;display:flex;align-items:center;gap:12px;min-width:0}
+  .fighter.p2{flex-direction:row-reverse}
+  .fighter .ava{display:grid;place-items:center;width:40px;height:40px;flex:0 0 40px}
+  .fighter.p1 .ava{color:var(--blue)} .fighter.p2 .ava{color:var(--red)}
+  .fighter .info{flex:1;min-width:0}
+  .fighter.p2 .info{text-align:right}
+  .fighter .name{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.04em;margin-bottom:6px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fighter.p1 .name{color:var(--blue)} .fighter.p2 .name{color:var(--red)}
+  .duel-score{display:flex;align-items:baseline;gap:5px}
+  .fighter.p2 .duel-score{justify-content:flex-end}
+  .duel-score .ds{font-family:var(--mono);font-weight:800;font-size:clamp(30px,5vw,46px);line-height:1;
+    font-variant-numeric:tabular-nums;transition:transform .2s}
+  .duel-score .ds.pop{transform:scale(1.22)}
+  .fighter.p1 .duel-score .ds{color:var(--blue)} .fighter.p2 .duel-score .ds{color:var(--red)}
+  .duel-score .ds-unit{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+  .duel-combo{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--signal);min-height:15px;margin-top:4px}
+  .vs{font-family:var(--mono);font-weight:800;color:#fff;background:var(--signal);padding:6px 10px;border-radius:8px;font-size:15px}
+  .duel-hits{position:relative;height:0}
+  .score-float{position:absolute;top:-6px;font-family:var(--mono);font-weight:800;font-size:24px;
+    animation:floatUp 1s ease forwards;pointer-events:none}
+  .score-float.p1{color:var(--blue)} .score-float.p2{color:var(--red)}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(6px)}20%{opacity:1}100%{opacity:0;transform:translateY(-34px)}}
+
+  .opt .picks{margin-left:auto;display:flex;gap:6px;flex:0 0 auto}
+  .pick{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;
+    font-family:var(--mono);font-size:12px;font-weight:700}
+  .pick.p1{background:var(--blue)} .pick.p2{background:var(--red)}
+  .opt.locked{cursor:default;box-shadow:0 3px 0 var(--line)}
+  .opt.locked:hover{transform:none}
+
+  .winner-title{font-size:clamp(30px,4.6vw,48px);font-weight:800;letter-spacing:-.01em;line-height:1}
+  .winner-title.p1{color:var(--blue)} .winner-title.p2{color:var(--red)} .winner-title.draw{color:var(--signal)}
+
+  /* ---- 與第一名的分差(遊戲中) ---- */
+  .stat-mini .gap{font-family:var(--mono);font-size:24px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .gap.behind{color:var(--ink-2)}
+  .gap.lead{color:var(--ok)}
+  .gap.crown{color:var(--signal)}
+  .duel-gap{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-2);margin:-4px 0 10px}
+  .duel-gap b{font-weight:800}
+  .duel-gap .g1{color:var(--blue)} .duel-gap .g2{color:var(--red)}
+  .duel-gap .t1{color:var(--signal)}
+
+  /* ---- 彈出小視窗(輸入名字 / 排行榜) ---- */
+  .mask{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:clamp(12px,3vw,34px);
+    background:rgba(18,18,20,.66);animation:maskin .18s ease-out}
+  @keyframes maskin{from{opacity:0}to{opacity:1}}
+  .modal{position:relative;width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;
+    background:var(--surface);border-radius:clamp(18px,2vw,26px);padding:clamp(22px,3vw,30px);overflow:hidden;
+    box-shadow:0 50px 110px -28px rgba(0,0,0,.75);
+    background-image:
+      linear-gradient(0deg,rgba(20,20,22,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(20,20,22,.018) 1px,transparent 1px);
+    background-size:32px 32px;
+    animation:modalin .24s cubic-bezier(.2,.7,.2,1)}
+  @keyframes modalin{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .modal h2{font-size:clamp(23px,3.2vw,30px);line-height:1.15;letter-spacing:-.01em;font-weight:800;
+    padding-right:34px}
+  .modal h2 em{font-style:normal;color:var(--signal)}
+  .modal .m-sub{margin-top:9px;color:var(--ink-2);font-size:14px;line-height:1.6}
+  .modal-x{position:absolute;top:12px;right:14px;z-index:2;width:32px;height:32px;border-radius:9px;border:none;
+    background:none;color:var(--ink-2);font-size:19px;line-height:1;cursor:pointer;transition:color .18s,background .18s}
+  .modal-x:hover{color:var(--ink);background:var(--line-2)}
+  .modal-body{flex:1;min-height:0;overflow:auto;margin-top:18px}
+  .modal-foot{display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+    margin-top:18px;padding-top:16px;border-top:1.5px solid var(--line)}
+  .modal-foot .cta{padding:13px 24px;font-size:16px}
+  .modal-foot .msg{font-family:var(--mono);font-size:12px;letter-spacing:.06em;margin-right:auto}
+
+  /* ---- 上榜:輸入名字 ---- */
+  .entry-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .entry-row .who{font-family:var(--mono);font-size:12px;font-weight:700;flex:0 0 auto;min-width:74px}
+  .entry-row .who.p1{color:var(--blue)} .entry-row .who.p2{color:var(--red)}
+  .entry-row .rank-note{font-family:var(--mono);font-size:12px;color:var(--ink-2);flex:0 0 auto}
+  .entry-row .rank-note b{color:var(--signal)}
+  .entry-row input{flex:1;min-width:180px;font-family:var(--sans);font-size:17px;font-weight:700;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:12px;padding:13px 15px;background:#fff;outline:none}
+  .entry-row input:focus{border-color:var(--ink)}
+
+  /* ---- 排行榜 ---- */
+  .board{margin-top:6px}
+  .board-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:2px}
+  .board-head h3{font-size:22px;letter-spacing:.04em}
+  .board-tabs{display:flex;gap:6px}
+  .board-tabs button{font-family:var(--mono);font-size:11px;letter-spacing:.1em;cursor:pointer;padding:6px 11px;
+    border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--ink-2);transition:.18s}
+  .board-tabs button:hover{border-color:var(--ink);color:var(--ink)}
+  .board-tabs button.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .board-list{position:relative;max-height:330px;overflow:auto;border:1.5px solid var(--line);border-top:none;
+    border-radius:0 0 14px 14px;background:#fff}
+  .brow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line-2);font-size:15px}
+  .brow:last-child{border-bottom:none}
+  .brow .rk{font-family:var(--mono);font-size:14px;font-weight:800;color:var(--ink-2);flex:0 0 40px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .brow .nm{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brow .tg{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ink-2);
+    border:1px solid var(--line);border-radius:6px;padding:2px 6px;flex:0 0 auto}
+  .brow .sc{font-family:var(--mono);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .brow.top1 .rk,.brow.top1 .sc{color:var(--signal)}
+  .brow.top2 .rk,.brow.top3 .rk{color:var(--ink)}
+  .brow.me{background:#fff6f1;box-shadow:inset 4px 0 0 var(--signal)}
+  .brow.me .nm{color:var(--signal)}
+  .board-empty{padding:26px 16px;text-align:center;color:var(--ink-2);font-size:14px}
+  /* 榜單獨立成一整頁:榜身自己捲動,標題列釘在最上方 */
+  #screen-board .board{margin-top:2px}
+  #screen-board .board-head{position:sticky;top:0;z-index:1;background:var(--surface)}
+  #screen-board .board-list{max-height:clamp(300px,48vh,470px)}
+  .board-note{margin-top:10px;color:var(--ink-2);font-size:14px;line-height:1.6;max-width:60ch}
+
+  .hidden{display:none!important}
+  .fade{animation:fade .24s cubic-bezier(.2,.7,.2,1)}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  @media (max-width:760px){
+    .grid-mode{grid-template-columns:1fr;gap:24px}
+    .options{grid-template-columns:1fr}
+    .pads{grid-template-columns:1fr}
+    .stat-grid{grid-template-columns:1fr}
+    .play-hud{align-items:flex-start}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+      transition-duration:.001ms!important}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="device">
+
+    <!-- 常駐控制面板頂欄 -->
+    <div class="deck-bar">
+      <div class="mark"><span class="dot"></span>佛學知識王 <span class="mono">FO·XUE</span></div>
+      <div class="meta">Knowledge · King &nbsp;/&nbsp; v2.0</div>
+    </div>
+
+    <div class="screens">
+
+      <!-- 模式選擇(首頁) -->
+      <section id="screen-mode" class="screen grid-mode fade">
+        <div class="hero">
+          <div class="idx">01 — Select Mode</div>
+          <h1 class="mega">佛學<br>知識王</h1>
+          <p class="lead">一念之間，見自本心。<span class="mono">Choose a mode to begin →</span></p>
+          <button class="ghost" style="margin-top:18px" onclick="Board.open(gLevel)">排行榜 Leaderboard</button>
+        </div>
+        <div class="stack">
+          <button class="tile tile-solo" onclick="goSingle()">
+            <span class="tile-no">01</span>
+            <span class="tile-ic"><svg viewBox="0 0 40 40" width="32" height="32" fill="none" stroke="currentColor" stroke-width="3.2"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="4" fill="currentColor" stroke="none"/></svg></span>
+            <span class="tile-body"><b>單人挑戰</b><small>限時搶答 · 分數與連擊</small></span>
+            <span class="tile-arrow">→</span>
+          </button>
+          <button class="tile tile-duel" onclick="goDuel()">
+            <span class="tile-no">02</span>
+            <span class="tile-ic"><svg viewBox="0 0 44 40" width="34" height="30" fill="currentColor"><path d="M3 5 L18 20 L3 35 Z"/><path d="M41 5 L26 20 L41 35 Z"/></svg></span>
+            <span class="tile-body"><b>雙人對決</b><small>藍牙搶答 · 比分對決</small></span>
+            <span class="tile-arrow">→</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 單人:規則 -->
+      <section id="screen-start" class="screen hidden">
+        <button class="ghost back-link" onclick="showScreen('mode')">← Back</button>
+        <div class="form-head">
+          <div class="idx">01 — Solo</div>
+          <h1 class="big">單人挑戰</h1>
+        </div>
+        <div class="spec">
+          <div class="spec-row"><span class="k">Questions</span><span class="v">10 題 · 每題 15 秒</span></div>
+          <div class="spec-row"><span class="k">Scoring</span><span class="v"><b>越快答對分數越高</b>(基礎＋速度)</span></div>
+          <div class="spec-row"><span class="k">Combo</span><span class="v">連續答對額外加分</span></div>
+          <div class="spec-row"><span class="k">Input</span><span class="v">滑鼠 / 鍵盤 1234·7890 / 藍牙按鈕</span></div>
+        </div>
+        <div class="level-pick">
+          <span class="lp-label">Tier 題組</span>
+          <button class="lp" data-level="初階" onclick="pickLevel('初階')"><i class="sw"></i>初階<span class="lp-count" data-level="初階"></span></button>
+          <button class="lp" data-level="中階" onclick="pickLevel('中階')"><i class="sw"></i>中階<span class="lp-count" data-level="中階"></span></button>
+          <button class="lp" data-level="高階" onclick="pickLevel('高階')"><i class="sw"></i>高階<span class="lp-count" data-level="高階"></span></button>
+        </div>
+        <button class="cta" onclick="Game.start()">開始修行 →</button>
+      </section>
+
+      <!-- 單人:遊玩 -->
+      <section id="screen-play" class="screen hidden">
+        <div class="play-hud">
+          <div class="hud-q">
+            <span class="huge" id="qIndex">1</span><span class="slash">/</span><span id="qTotal">10</span>
+            <span class="hud-lbl">題號</span>
+          </div>
+          <div class="hud-cat" id="qCat">佛學常識</div>
+          <div class="hud-stats">
+            <div class="stat-mini"><span class="num" id="score">0</span><span class="hud-lbl">分數 Score</span></div>
+            <div class="stat-mini"><span class="num combo" id="combo">0</span><span class="hud-lbl">連擊 Combo</span></div>
+            <div class="stat-mini"><span class="gap" id="gapTop">—</span><span class="hud-lbl" id="gapLbl">與第一名 Gap</span></div>
+          </div>
+        </div>
+        <div class="timer-wrap"><div class="timer-bar" id="timerBar"></div></div>
+        <div class="question" id="questionText">—</div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+      </section>
+
+      <!-- 單人:結果 -->
+      <section id="screen-result" class="screen hidden">
+        <div class="res-head">
+          <div class="idx">Result — 修行成果</div>
+          <h1 class="rank-title" id="rankTitle">—</h1>
+          <p class="rank-sub" id="rankSub">—</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="n" id="finalScore">0</div><div class="l">總分 Score</div></div>
+          <div class="stat"><div class="n" id="finalCorrect">0</div><div class="l">答對 Correct</div></div>
+          <div class="stat"><div class="n" id="finalMax">0</div><div class="l">最高連擊 Combo</div></div>
+        </div>
+        <div class="res-actions">
+          <button class="cta" onclick="Game.start()">再修一輪 ↻</button>
+          <button class="ghost" onclick="Board.open(gLevel)">排行榜 Leaderboard</button>
+          <button class="ghost" onclick="showScreen('mode')">回首頁 Home</button>
+        </div>
+      </section>
+
+      <!-- 對決:設定 / 按鈕測試 -->
+      <section id="screen-duel-setup" class="screen hidden">
+        <button class="ghost back-link" onclick="showScreen('mode')">← Back</button>
+        <div class="form-head">
+          <div class="idx">02 — Versus / 按鈕連線測試</div>
+          <h1 class="big">雙人對決</h1>
+        </div>
+        <div class="pads">
+          <div class="pad p1">
+            <h4>玩家一 <span class="mono">P1 · 1234</span></h4>
+            <div class="keys">
+              <div class="key" data-p="1" data-i="0">A<small>鍵 1</small></div>
+              <div class="key" data-p="1" data-i="1">B<small>鍵 2</small></div>
+              <div class="key" data-p="1" data-i="2">C<small>鍵 3</small></div>
+              <div class="key" data-p="1" data-i="3">D<small>鍵 4</small></div>
+            </div>
+          </div>
+          <div class="pad p2">
+            <h4>玩家二 <span class="mono">P2 · 7890</span></h4>
+            <div class="keys">
+              <div class="key" data-p="2" data-i="0">A<small>鍵 7</small></div>
+              <div class="key" data-p="2" data-i="1">B<small>鍵 8</small></div>
+              <div class="key" data-p="2" data-i="2">C<small>鍵 9</small></div>
+              <div class="key" data-p="2" data-i="3">D<small>鍵 0</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec-row"><span class="k">Pairing</span><span class="v">Windows 藍牙配對 <b>FoXue-P1</b> / <b>FoXue-P2</b>,按鍵會點亮上方對應格</span></div>
+          <div class="spec-row"><span class="k">No HW</span><span class="v">沒有硬體?玩家一按 <b>1 2 3 4</b>、玩家二按 <b>7 8 9 0</b></span></div>
+        </div>
+        <div class="level-pick">
+          <span class="lp-label">Tier 題組</span>
+          <button class="lp" data-level="初階" onclick="pickLevel('初階')"><i class="sw"></i>初階<span class="lp-count" data-level="初階"></span></button>
+          <button class="lp" data-level="中階" onclick="pickLevel('中階')"><i class="sw"></i>中階<span class="lp-count" data-level="中階"></span></button>
+          <button class="lp" data-level="高階" onclick="pickLevel('高階')"><i class="sw"></i>高階<span class="lp-count" data-level="高階"></span></button>
+        </div>
+        <button class="cta" onclick="Duel.start()">開始對決 →</button>
+      </section>
+
+      <!-- 對決:戰鬥布景 -->
+      <section id="screen-duel" class="screen hidden">
+        <div class="duel-top">
+          <div class="fighter p1">
+            <div class="ava"><svg viewBox="0 0 40 40" width="34" height="34"><circle cx="20" cy="20" r="15" fill="currentColor"/><circle cx="20" cy="20" r="6.5" fill="#fbfaf7"/></svg></div>
+            <div class="info">
+              <div class="name">玩家一 · P1</div>
+              <div class="duel-score"><span class="ds" id="ds1">0</span><span class="ds-unit">分</span></div>
+              <div class="duel-combo" id="dc1">&nbsp;</div>
+            </div>
+          </div>
+          <div class="vs">VS</div>
+          <div class="fighter p2">
+            <div class="ava"><svg viewBox="0 0 40 40" width="34" height="34"><circle cx="20" cy="20" r="15" fill="currentColor"/><circle cx="20" cy="20" r="6.5" fill="#fbfaf7"/></svg></div>
+            <div class="info">
+              <div class="name">玩家二 · P2</div>
+              <div class="duel-score"><span class="ds" id="ds2">0</span><span class="ds-unit">分</span></div>
+              <div class="duel-combo" id="dc2">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+        <div class="duel-hits"><div id="hitLayer"></div></div>
+        <div class="duel-gap" id="duelGap"></div>
+        <div class="timer-wrap"><div class="timer-bar" id="dTimerBar"></div></div>
+        <div class="hud-cat" id="dCat" style="display:inline-block;margin-bottom:6px">佛學常識</div>
+        <div class="question" id="dQuestion">—</div>
+        <div class="options" id="dOptions"></div>
+        <div class="feedback" id="dFeedback"></div>
+      </section>
+
+      <!-- 對決:結果 -->
+      <section id="screen-duel-result" class="screen hidden">
+        <div class="res-head">
+          <div class="idx">Result — 對決結果</div>
+          <h1 class="winner-title" id="winTitle">—</h1>
+          <p class="rank-sub" id="winSub">—</p>
+        </div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr;max-width:460px">
+          <div class="stat"><div class="n" id="dEnd1">0</div><div class="l">玩家一 P1 總分</div></div>
+          <div class="stat"><div class="n" id="dEnd2">0</div><div class="l">玩家二 P2 總分</div></div>
+        </div>
+        <div class="res-actions">
+          <button class="cta" onclick="Duel.start()">再戰一場 ↻</button>
+          <button class="ghost" onclick="Board.open(gLevel)">排行榜 Leaderboard</button>
+          <button class="ghost" onclick="showScreen('mode')">回首頁 Home</button>
+        </div>
+      </section>
+
+      <!-- 排行榜:獨立一整頁 -->
+      <section id="screen-board" class="screen hidden">
+        <button class="ghost back-link" onclick="Board.back()">← Back</button>
+        <div class="form-head">
+          <div class="idx">Leaderboard — 排行榜</div>
+          <h1 class="big" id="boardTitle">排行榜</h1>
+          <p class="board-note" id="boardNote" style="display:none"></p>
+        </div>
+        <div class="board" id="boardBox"></div>
+        <div class="res-actions" style="margin-top:22px">
+          <button class="ghost" onclick="Board.back()">返回 Back</button>
+          <button class="ghost" onclick="showScreen('mode')">回首頁 Home</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ 題庫 API(玩家端只讀,題庫改在後台 /admin) ============ */
+const Bank = (() => {
+  // 從資料庫隨機抽題出來玩(可指定題組 level)
+  async function loadQuiz(n, level){
+    const r = await fetch(`/api/quiz?n=${n}&level=${encodeURIComponent(level||"")}`);
+    if(!r.ok) throw new Error("讀取題目失敗");
+    return (await r.json()).questions;
+  }
+  return { loadQuiz };
+})();
+
+/* ============ 排行榜(資料庫 scores 表) ============
+   ‧ 遊戲中:顯示與第一名的分差
+   ‧ 遊戲結束:擠進前 20 名就跳出輸入玩家名,送出後顯示排行榜        */
+const Board = (() => {
+  const SIZE  = 20;                       // 前 20 名才上榜
+  const TIERS = ["初階","中階","高階"];
+  const NAME_KEY = "foxue.lastName";
+
+  const esc = s => String(s==null?"":s).replace(/[&<>"]/g,
+    c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const num = n => Number(n||0).toLocaleString("en-US");
+
+  async function load(level){
+    const r = await fetch("/api/leaderboard?level="+encodeURIComponent(level||""));
+    if(!r.ok) throw new Error("讀取排行榜失敗");
+    return r.json();                       // { top:[…], top1, count, cut, size }
+  }
+  async function post(payload){
+    const r = await fetch("/api/leaderboard",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error||"上傳成績失敗");
+    return d;                              // { id, rank, level, top:[…] }
+  }
+  // 遊戲中用:目前題組的榜首分數
+  async function topScore(level){
+    try{ return (await load(level)).top1 || 0; }catch(e){ return 0; }
+  }
+
+  /* ---- 彈出小視窗 ---- */
+  let openCount = 0;
+  function modal(inner, onClose){
+    const mask = document.createElement("div");
+    mask.className = "mask";
+    mask.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+        <button class="modal-x" aria-label="關閉">×</button>${inner}</div>`;
+    function onKey(e){ if(e.key === "Escape"){ e.stopPropagation(); close(); } }
+    function close(){
+      if(!mask.isConnected) return;
+      mask.remove();
+      document.removeEventListener("keydown", onKey, true);
+      if(--openCount <= 0){ openCount = 0; document.body.style.overflow = ""; }
+      if(onClose) onClose();
+    }
+    mask.addEventListener("mousedown", e => { if(e.target === mask) close(); });
+    mask.querySelector(".modal-x").onclick = close;
+    document.addEventListener("keydown", onKey, true);
+    document.body.appendChild(mask);
+    openCount++; document.body.style.overflow = "hidden";
+    return { box: mask.querySelector(".modal"), close };
+  }
+
+  /* ---- 排行榜:切到獨立的整頁畫面 ---- */
+  let backTo = "mode";                     // 進榜單前待的畫面,返回時回去
+  function open(level, highlight, note){
+    if(typeof gScreen === "string" && gScreen !== "board") backTo = gScreen;
+    document.getElementById("boardTitle").textContent = `排行榜 TOP ${SIZE}`;
+    const n = document.getElementById("boardNote");
+    n.textContent = note || "";
+    n.style.display = note ? "" : "none";
+    showScreen("board");
+    renderBoard(document.getElementById("boardBox"), level, highlight || []);
+  }
+  function back(){ showScreen(backTo || "mode"); }
+
+  function rowHtml(r, i, hl){
+    const cls = ["brow"];
+    if(i < 3) cls.push("top"+(i+1));
+    if(hl.includes(r.id)) cls.push("me");
+    const day = String(r.at||"").slice(5,10);
+    return `<div class="${cls.join(" ")}">`
+      + `<span class="rk">${i+1}</span>`
+      + `<span class="nm">${esc(r.name)}</span>`
+      + `<span class="tg">${r.mode==="duel"?"對決":"單人"}${day?" · "+day:""}</span>`
+      + `<span class="sc">${num(r.score)}</span></div>`;
+  }
+  async function renderBoard(box, level, hl){
+    box.innerHTML = `<div class="board-head">
+        <h3>${esc(level)}</h3>
+        <div class="board-tabs">${TIERS.map(l =>
+          `<button data-level="${l}"${l===level?' class="active"':""}>${l}</button>`).join("")}</div>
+      </div>
+      <div class="board-list"><div class="board-empty">讀取中…</div></div>`;
+    box.querySelectorAll(".board-tabs button").forEach(b => {
+      b.onclick = () => renderBoard(box, b.dataset.level, hl);   // 切換題組
+    });
+    const list = box.querySelector(".board-list");
+    try{
+      const d = await load(level);
+      list.innerHTML = d.top.length
+        ? d.top.map((r,i) => rowHtml(r,i,hl)).join("")
+        : `<div class="board-empty">「${esc(level)}」還沒有人上榜,你就是第一位!</div>`;
+      const me = list.querySelector(".brow.me");     // 自己的名次捲到看得到的位置
+      if(me) me.scrollIntoView({block:"center"});
+    }catch(e){
+      list.innerHTML = `<div class="board-empty">排行榜讀取失敗:${esc(e.message)}</div>`;
+    }
+  }
+
+  /* ---- 上榜:輸入玩家名的小視窗 ---- */
+  function askName(level, cand){
+    let submitted = false;
+    const last = localStorage.getItem(NAME_KEY) || "";
+    const title = cand.length === 1
+      ? `擠進排行榜第 <em>${cand[0].rank}</em> 名`
+      : `兩位都擠進排行榜了`;
+    const m = modal(`<div class="idx">New Record — 上榜登錄</div>
+        <h2>${title}</h2>
+        <p class="m-sub">輸入玩家名,登錄「${esc(level)}」題組排行榜(前 ${SIZE} 名)。</p>
+        <div class="modal-body">
+          ${cand.map((c,i) => `<div class="entry-row">
+              <span class="who ${c.cls||""}">${esc(c.who||"玩家")}</span>
+              <input type="text" maxlength="12" data-i="${i}" placeholder="你的名字(最多 12 字)"
+                     value="${cand.length===1&&i===0?esc(last):""}">
+              <span class="rank-note">${num(c.score)} 分 · 第 <b>${c.rank}</b> 名</span>
+            </div>`).join("")}
+        </div>
+        <div class="modal-foot">
+          <span class="msg"></span>
+          <button class="ghost">略過 Skip</button>
+          <button class="cta">登錄上榜 →</button>
+        </div>`,
+      () => { if(!submitted) open(level, []); });   // 沒登錄也還是給他看榜單
+
+    const inputs = [...m.box.querySelectorAll("input")];
+    const btn = m.box.querySelector(".cta");
+    const skip = m.box.querySelector(".modal-foot .ghost");
+    const msg = m.box.querySelector(".modal-foot .msg");
+    skip.onclick = m.close;
+    inputs.forEach(inp => inp.addEventListener("keydown", e => {
+      if(e.key === "Enter"){ e.preventDefault(); btn.click(); }
+    }));
+    setTimeout(() => { inputs[0].focus(); inputs[0].select(); }, 160);
+
+    btn.onclick = async () => {
+      btn.disabled = true; skip.disabled = true; btn.textContent = "登錄中…";
+      const ids = [];
+      try{
+        for(let i=0;i<cand.length;i++){
+          const c = cand[i];
+          const name = inputs[i].value.trim();
+          const d = await post({ name, score:c.score, level, mode:c.mode||"solo",
+                                 correct:c.correct, total:c.total, maxCombo:c.maxCombo });
+          ids.push(d.id);
+          if(cand.length===1 && name) localStorage.setItem(NAME_KEY, name);
+        }
+        submitted = true;
+        m.close();
+        open(level, ids);                    // 換成排行榜視窗,自己那列會高亮
+      }catch(e){
+        btn.disabled = false; skip.disabled = false; btn.textContent = "登錄上榜 →";
+        msg.style.color = "var(--red)";
+        msg.textContent = "登錄失敗:" + e.message;
+      }
+    };
+  }
+
+  /* ---- 上榜資格:用剛抓到的前 20 名就地判斷 ---- */
+  function rankIn(top, score, aheadInBatch){
+    return top.filter(r => r.score >= score).length + (aheadInBatch||0) + 1;
+  }
+
+  /* ---- 一局結束:前 20 名 → 跳出輸入名字 → 跳出排行榜 ----
+     results: [{ score, mode, correct, total, maxCombo, who, cls }]  */
+  async function afterGame(level, results){
+    let d;
+    try{ d = await load(level); }catch(e){ return; }
+
+    // 同一局有兩位玩家時,分數高的先卡位
+    const order = results.map((r,i) => ({...r, i})).sort((a,b) => b.score - a.score);
+    const cand = [];
+    order.forEach((r,k) => {
+      const rank = rankIn(d.top, r.score, k);
+      if(r.score > 0 && rank <= SIZE) cand.push({...r, rank});
+    });
+    cand.sort((a,b) => a.i - b.i);          // 顯示順序照玩家一、玩家二
+
+    const best = Math.max(0, ...results.map(r => r.score));
+    const note = (!cand.length && d.count >= SIZE && best > 0)
+      ? `這局最高 ${num(best)} 分,還差 ${num(d.cut - best + 1)} 分就能擠進「${esc(level)}」前 ${SIZE} 名。`
+      : "";
+
+    // 先讓玩家看一眼成績,再跳出視窗
+    setTimeout(() => { cand.length ? askName(level, cand) : open(level, [], note); }, 700);
+  }
+
+  return { open, back, afterGame, topScore, num };
+})();
+
+/* ============ 畫面切換 ============ */
+let gScreen = "mode";
+function showScreen(name){
+  gScreen = name;
+  document.querySelectorAll('section[id^="screen-"]').forEach(s=>s.classList.add("hidden"));
+  const el=document.getElementById("screen-"+name);
+  el.classList.remove("hidden");
+  el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade");
+}
+function goSingle(){ pickLevel(gLevel); refreshLevelCounts(); showScreen("start"); }
+function goDuel(){ pickLevel(gLevel); refreshLevelCounts(); showScreen("duel-setup"); }
+
+/* ============ 題組選擇 ============ */
+let gLevel = "初階";
+function pickLevel(lv){
+  gLevel = lv;
+  document.querySelectorAll(".lp").forEach(b=>b.classList.toggle("active", b.dataset.level===lv));
+}
+async function refreshLevelCounts(){
+  try{
+    const r = await fetch("/api/levels");
+    const d = await r.json();
+    document.querySelectorAll(".lp-count").forEach(s=>{
+      const n = (d.counts && d.counts[s.dataset.level]) || 0;
+      s.textContent = " ("+n+")";
+      const btn = s.closest(".lp"); if(btn) btn.disabled = (n===0);
+    });
+    // 目前所選題組若沒題目,自動改選第一個有題目的題組
+    if((d.counts[gLevel]||0)===0){
+      const alt = (d.levels||[]).find(l=>(d.counts[l]||0)>0);
+      if(alt) pickLevel(alt);
+    }
+  }catch(e){}
+}
+
+/* ============ 藍牙按鈕輸入 ============
+   ESP32-C3 以「藍牙鍵盤」方式送鍵:
+     玩家一 A/B/C/D → 1 2 3 4
+     玩家二 A/B/C/D → 7 8 9 0
+   沒有硬體時可直接用電腦鍵盤上述按鍵測試。            */
+const Input = (() => {
+  const MAP = { "1":[1,0],"2":[1,1],"3":[1,2],"4":[1,3],
+                "7":[2,0],"8":[2,1],"9":[2,2],"0":[2,3] };
+  let handler = null;                         // function(player, choice)
+  function set(fn){ handler = fn; }
+  function clear(){ handler = null; }
+
+  function flashPad(p,i){
+    const k = document.querySelector(`.key[data-p="${p}"][data-i="${i}"]`);
+    if(k){ k.classList.add("hit"); setTimeout(()=>k.classList.remove("hit"),180); }
+  }
+  window.addEventListener("keydown", e => {
+    const m = MAP[e.key];
+    if(!m) return;
+    flashPad(m[0], m[1]);                     // 設定頁測試盤會亮
+    if(handler) handler(m[0], m[1]);          // 對決中交給遊戲處理
+  });
+  return { set, clear };
+})();
+
+/* ============ 雙人對決(知識王式血條對戰) ============ */
+const Duel = (() => {
+  const TIME = 12;          // 每題秒數
+  const TOTALQ = 10;        // 對決題數(答完比總分)
+  const BASE = 100;         // 答對基礎分
+  const SPEED_MAX = 100;    // 速度最高加分
+  const COMBO_STEP = 20;    // 每段連擊加分
+
+  const $ = id => document.getElementById(id);
+  let deck=[], idx=0, score={1:0,2:0}, combo={1:0,2:0};
+  let maxCombo={1:0,2:0}, correctCount={1:0,2:0};
+  let tick=null, dLeft=0, roundOver=false;
+  let picks={}, lockTime={};
+  let topScore=0;             // 本題組排行榜榜首分數(遊戲中顯示分差用)
+
+  function shuffle(arr){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    return a;
+  }
+
+  async function start(){
+    try{ deck = await Bank.loadQuiz(TOTALQ, gLevel); }
+    catch(e){ alert("無法連線到伺服器,請確認已執行 server.js(雙擊「啟動.bat」)。"); return; }
+    if(!deck.length){ alert(`「${gLevel}」題組目前沒有題目,請改選其他題組,或到後台(/admin)新增。`); return; }
+    idx=0; score={1:0,2:0}; combo={1:0,2:0};
+    maxCombo={1:0,2:0}; correctCount={1:0,2:0};
+    updateScore(1); updateScore(2); updateCombo(1); updateCombo(2);
+    topScore = await Board.topScore(gLevel);   // 對照排行榜第一名
+    updateGap();
+    Input.set(onButton);
+    showScreen("duel");
+    render();
+  }
+
+  function render(){
+    roundOver=false; picks={}; lockTime={};
+    const item=deck[idx];
+    $("dCat").textContent = `第 ${idx+1} / ${deck.length} 題・${item.c}`;
+    $("dQuestion").textContent = item.q;
+    $("dFeedback").textContent=""; $("dFeedback").className="feedback";
+
+    const order = shuffle([0,1,2,3]);   // 雙方看到同一份排列
+    const box=$("dOptions"); box.innerHTML="";
+    order.forEach((orig,i)=>{
+      const el=document.createElement("div");
+      el.className="opt locked";
+      el.dataset.correct = (orig===item.a) ? "1" : "0";
+      el.innerHTML = `<span class="tag">${"ABCD"[i]}</span><span>${item.o[orig]}</span>`
+                   + `<span class="picks" id="picks-${i}"></span>`;
+      box.appendChild(el);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    clearInterval(tick);
+    const bar=$("dTimerBar");
+    bar.style.transition="none"; bar.style.width="100%"; void bar.offsetWidth;
+    bar.style.transition="width .1s linear";
+    const t0=Date.now();
+    tick=setInterval(()=>{
+      dLeft=Math.max(0, TIME-(Date.now()-t0)/1000);
+      bar.style.width=(dLeft/TIME*100)+"%";
+      if(dLeft<=0){ clearInterval(tick); resolve(); }
+    },80);
+  }
+
+  function onButton(player, choice){
+    if(roundOver) return;
+    if(picks[player]!==undefined) return;      // 已鎖定,忽略後續按鍵
+    picks[player]=choice;
+    lockTime[player]=dLeft;                     // 記錄剩餘時間 → 速度加分
+    addPickBadge(choice, player);
+    if(picks[1]!==undefined && picks[2]!==undefined) resolve();
+  }
+
+  function addPickBadge(i, p){
+    const box=$("picks-"+i); if(!box) return;
+    const b=document.createElement("span");
+    b.className="pick p"+p; b.textContent = p;
+    box.appendChild(b);
+  }
+
+  function resolve(){
+    if(roundOver) return;
+    roundOver=true; clearInterval(tick);
+    const opts=[...$("dOptions").children];
+    opts.forEach(el=>{ el.classList.add(el.dataset.correct==="1" ? "correct" : "dim"); });
+
+    // 各自計分:答對 = 基礎 + 速度 + 連擊;答錯 = 0 並中斷連擊
+    const gain={1:0,2:0};
+    [1,2].forEach(p=>{
+      const ch=picks[p];
+      const correct = ch!==undefined && opts[ch] && opts[ch].dataset.correct==="1";
+      if(correct){
+        combo[p]++;
+        maxCombo[p]=Math.max(maxCombo[p],combo[p]); correctCount[p]++;
+        const speed=Math.round(SPEED_MAX*(lockTime[p]/TIME));
+        const comboBonus=(combo[p]-1)*COMBO_STEP;
+        gain[p]=BASE+speed+comboBonus;
+        score[p]+=gain[p];
+      }else{
+        combo[p]=0;
+      }
+    });
+    [1,2].forEach(p=>{ if(gain[p]>0){ floatScore(p, gain[p]); popScore(p); } updateScore(p); updateCombo(p); });
+    updateGap();
+
+    const fb=$("dFeedback");
+    if(gain[1]&&gain[2]) { fb.className="feedback good"; fb.textContent=`雙方答對! P1 +${gain[1]}　P2 +${gain[2]}`; }
+    else if(gain[1])     { fb.className="feedback good"; fb.textContent=`玩家一(P1)答對! +${gain[1]} 分`; }
+    else if(gain[2])     { fb.className="feedback good"; fb.textContent=`玩家二(P2)答對! +${gain[2]} 分`; }
+    else                 { fb.className="feedback bad";  fb.textContent="雙方皆未答對,無人得分。"; }
+
+    setTimeout(()=>{
+      if(idx>=deck.length-1) finish();
+      else { idx++; render(); }
+    }, 1600);
+  }
+
+  // 對決中顯示雙方與排行榜第一名的分差
+  function updateGap(){
+    const el=$("duelGap"); if(!el) return;
+    if(!topScore){
+      el.innerHTML = `<span class="t1">「${gLevel}」排行榜尚無紀錄 — 今天的榜首就在你們之中</span>`;
+      return;
+    }
+    const one = p => {
+      const d = score[p]-topScore;
+      return `<span class="g${p}">P${p} ${d>=0?"+"+Board.num(d):"−"+Board.num(-d)}</span>`;
+    };
+    el.innerHTML = `<span class="t1">榜首 <b>${Board.num(topScore)}</b></span>${one(1)}${one(2)}`;
+  }
+
+  function updateScore(p){ $("ds"+p).textContent=score[p]; }
+  function updateCombo(p){ $("dc"+p).innerHTML = combo[p]>=2 ? ("連擊 ×"+combo[p]) : "&nbsp;"; }
+  function popScore(p){ const e=$("ds"+p); e.classList.add("pop"); setTimeout(()=>e.classList.remove("pop"),200); }
+  function floatScore(p, amt){
+    const el=document.createElement("div");
+    el.className="score-float p"+p; el.textContent="+"+amt;
+    el.style[p===1?"left":"right"]="16%";
+    $("hitLayer").appendChild(el);
+    setTimeout(()=>el.remove(),1000);
+  }
+
+  function finish(){
+    clearInterval(tick); Input.clear();
+    $("dEnd1").textContent=score[1];
+    $("dEnd2").textContent=score[2];
+    const t=$("winTitle"), s=$("winSub");
+    if(score[1]===score[2]){ t.className="winner-title draw"; t.textContent="平手!"; s.textContent="勢均力敵,佛法無邊。"; }
+    else if(score[1]>score[2]){ t.className="winner-title p1"; t.textContent="玩家一 獲勝!"; s.textContent="智慧如炬,搶答無敵。"; }
+    else { t.className="winner-title p2"; t.textContent="玩家二 獲勝!"; s.textContent="慧根深厚,後發制人。"; }
+    showScreen("duel-result");
+    // 兩位玩家各自結算,擠進前 20 名的才要求輸入玩家名
+    Board.afterGame(gLevel,[
+      { score:score[1], mode:"duel", correct:correctCount[1], total:deck.length,
+        maxCombo:maxCombo[1], who:"玩家一 P1", cls:"p1" },
+      { score:score[2], mode:"duel", correct:correctCount[2], total:deck.length,
+        maxCombo:maxCombo[2], who:"玩家二 P2", cls:"p2" },
+    ]);
+  }
+
+  return { start };
+})();
+
+/* ============ 遊戲邏輯 ============ */
+const Game = (() => {
+  const TOTAL = 10;           // 每局題數
+  const TIME = 15;            // 每題秒數
+  const BASE = 100;           // 答對基礎分
+  const SPEED_MAX = 100;      // 速度最高加分
+  const COMBO_STEP = 20;      // 每段 combo 加分
+
+  let deck=[], idx=0, score=0, combo=0, maxCombo=0, correctCount=0;
+  let timeLeft=0, tick=null, locked=false;
+  let topScore=0;             // 本題組排行榜榜首分數(遊戲中顯示分差用)
+
+  const $ = id => document.getElementById(id);
+
+  const show = showScreen;
+
+  function shuffle(arr){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    return a;
+  }
+
+  async function start(){
+    try{
+      deck = await Bank.loadQuiz(TOTAL, gLevel);
+    }catch(e){
+      alert("無法連線到伺服器,請確認已執行 server.js(雙擊「啟動.bat」)。");
+      return;
+    }
+    if(!deck.length){ alert(`「${gLevel}」題組目前沒有題目,請改選其他題組,或到後台(/admin)新增。`); return; }
+    idx=0; score=0; combo=0; maxCombo=0; correctCount=0;
+    $("qTotal").textContent = deck.length;
+    $("score").textContent = 0;
+    $("combo").textContent = 0;
+    topScore = await Board.topScore(gLevel);   // 對照排行榜第一名
+    updateGap();
+    Input.set(onButton);      // 單人也可用藍牙按鈕/鍵盤作答(任一組皆可)
+    show("play");
+    render();
+  }
+
+  // 按鈕/鍵盤:A B C D → 對應畫面上第 0~3 個選項;不分玩家一二
+  function onButton(player, choice){
+    const btns=[...$("options").children];
+    const b=btns[choice];
+    if(b && !b.disabled) b.click();
+  }
+
+  function render(){
+    locked=false;
+    const item = deck[idx];
+    $("qIndex").textContent = idx+1;
+    $("qCat").textContent = item.c;
+    $("questionText").textContent = item.q;
+    $("feedback").textContent="";
+    $("feedback").className="feedback";
+
+    // 選項亂序,並記住正解位置
+    const order = shuffle([0,1,2,3]);
+    const box = $("options");
+    box.innerHTML="";
+    const tags=["A","B","C","D"];
+    order.forEach((origIdx,i)=>{
+      const btn=document.createElement("button");
+      btn.className="opt";
+      btn.innerHTML = `<span class="tag">${tags[i]}</span><span>${item.o[origIdx]}</span>`;
+      btn.onclick = () => answer(btn, origIdx===item.a);
+      box.appendChild(btn);
+    });
+
+    startTimer();
+  }
+
+  function startTimer(){
+    clearInterval(tick);
+    timeLeft = TIME;
+    const bar=$("timerBar");
+    bar.style.transition="none"; bar.style.width="100%";
+    void bar.offsetWidth;
+    bar.style.transition="width .1s linear";
+    const t0=Date.now();
+    tick=setInterval(()=>{
+      const elapsed=(Date.now()-t0)/1000;
+      timeLeft=Math.max(0, TIME-elapsed);
+      bar.style.width=(timeLeft/TIME*100)+"%";
+      if(timeLeft<=0){ clearInterval(tick); timeout(); }
+    },80);
+  }
+
+  function answer(btn, isCorrect){
+    if(locked) return;
+    locked=true;
+    clearInterval(tick);
+    const item=deck[idx];
+    const speedBonus = Math.round(SPEED_MAX * (timeLeft/TIME));
+
+    // 標示所有選項
+    [...$("options").children].forEach(el=>{
+      el.disabled=true;
+      const label=el.querySelector("span:last-child").textContent;
+      if(label===item.o[item.a]) el.classList.add("correct");
+      else el.classList.add("dim");
+    });
+
+    const fb=$("feedback");
+    if(isCorrect){
+      combo++; maxCombo=Math.max(maxCombo,combo); correctCount++;
+      const comboBonus=(combo-1)*COMBO_STEP;
+      const gain=BASE+speedBonus+comboBonus;
+      score+=gain;
+      fb.className="feedback good";
+      fb.innerHTML = `答對了! <span class="gain">+${gain}</span>　`
+        + `(基礎 ${BASE}・速度 ${speedBonus}${comboBonus?`・連擊 ${comboBonus}`:""})`;
+      popCombo();
+    }else{
+      btn.classList.remove("dim"); btn.classList.add("wrong");
+      combo=0;
+      fb.className="feedback bad";
+      fb.textContent = "答錯了，放下執著，再接再厲。";
+    }
+    $("score").textContent=score;
+    $("combo").textContent=combo;
+    updateGap();
+    setTimeout(next, isCorrect?1050:1350);
+  }
+
+  // 遊戲中即時顯示「與排行榜第一名的分差」
+  function updateGap(){
+    const el=$("gapTop"), lbl=$("gapLbl");
+    if(!el) return;
+    if(!topScore){ el.className="gap crown"; el.textContent="榜首"; lbl.textContent="尚無紀錄 No Record"; return; }
+    const diff=score-topScore;
+    if(diff>=0){ el.className="gap lead"; el.textContent="+"+Board.num(diff); lbl.textContent="超越第一名 Lead"; }
+    else{ el.className="gap behind"; el.textContent="−"+Board.num(-diff); lbl.textContent=`與第一名 ${Board.num(topScore)}`; }
+  }
+
+  function timeout(){
+    if(locked) return;
+    locked=true;
+    const item=deck[idx];
+    [...$("options").children].forEach(el=>{
+      el.disabled=true;
+      const label=el.querySelector("span:last-child").textContent;
+      if(label===item.o[item.a]) el.classList.add("correct");
+      else el.classList.add("dim");
+    });
+    combo=0; $("combo").textContent=0;
+    const fb=$("feedback"); fb.className="feedback bad";
+    fb.textContent="時間到！一念遲疑，機緣已過。";
+    setTimeout(next,1350);
+  }
+
+  function popCombo(){
+    const c=$("combo"); c.classList.add("pop");
+    setTimeout(()=>c.classList.remove("pop"),200);
+  }
+
+  function next(){
+    idx++;
+    if(idx>=deck.length) finish();
+    else render();
+  }
+
+  function rankFor(score,total){
+    const max = total*(BASE+SPEED_MAX+(total-1)*COMBO_STEP/2); // 概略滿分參考
+    const r = score/ (total*300);
+    if(r>=0.95) return ["登地菩薩","智慧圓滿,福慧雙修,已臻上乘境界。"];
+    if(r>=0.75) return ["阿羅漢","慧根深厚,煩惱漸盡,離解脫不遠矣。"];
+    if(r>=0.55) return ["修行者","精進不懈,慧命增長,再接再厲。"];
+    if(r>=0.30) return ["初發心","已種善根,願持恆心,常聞正法。"];
+    return ["結緣眾生","與佛有緣,不妨多加薰習,福慧同增。"];
+  }
+
+  function finish(){
+    clearInterval(tick);
+    Input.clear();
+    const [title,sub]=rankFor(score,deck.length);
+    $("rankTitle").textContent=title;
+    $("rankSub").textContent=sub;
+    $("finalScore").textContent=score;
+    $("finalCorrect").textContent=correctCount+" / "+deck.length;
+    $("finalMax").textContent=maxCombo;
+    show("result");
+    // 前 20 名 → 要求輸入玩家名;不論是否上榜都顯示排行榜
+    Board.afterGame(gLevel,[{
+      score, mode:"solo", correct:correctCount, total:deck.length,
+      maxCombo, who:"你 YOU", cls:""
+    }]);
+  }
+
+  return { start };
+})();
+</script>
+</body>
+</html>
