@@ -39,6 +39,46 @@
 改名成 `node-mac` 放進 `runtime` 資料夾,`啟動.command` 會優先使用它。
 (注意 Apple Silicon 是 arm64、Intel 是 x64,要下對版本。)
 
+### 從 GitHub clone 下來(想改程式 / 自己架)
+
+GitHub 上的版本**不含** `runtime/node.exe`(89MB 的執行環境)和 `foxue.db`(執行時才產生),
+所以步驟和上面的壓縮檔版不太一樣:
+
+1. 先安裝 Node.js:到 <https://nodejs.org> 下載 LTS 安裝,**需 22.5 以上**
+   (本專案用的是 Node 內建的 `node:sqlite`,舊版沒有這個模組)。
+   裝好後可以用 `node -v` 確認版本。
+2. 取得原始碼:
+
+   ```bash
+   git clone https://github.com/jay102024/foxue-quiz-king.git
+   cd foxue-quiz-king
+   ```
+
+3. **不需要 `npm install`** —— 本專案零依賴,沒有 `package.json`,只用 Node 內建模組。
+4. 啟動伺服器:
+
+   ```bash
+   node --no-warnings server.js
+   ```
+
+   終端機出現「請用瀏覽器開啟: http://localhost:3000」就成功了,自己打開瀏覽器進去即可。
+   想換連接埠就設環境變數,例如 `PORT=8080 node --no-warnings server.js`。
+
+   `啟動.bat`(Windows)和 `啟動.command`(Mac)一樣可以用 —— 它們找不到 `runtime`
+   資料夾時會自動改用系統裝的 Node,而且會順便幫你開瀏覽器。
+   Mac 第一次要先執行 `chmod +x 啟動.command`。
+5. 第一次啟動會自動建立 `foxue.db`,並寫入 `server.js` 裡的**預設題庫**。
+   之後在 `/admin` 後台新增或修改的題目、以及排行榜成績,都只存在這個檔案裡,
+   而它**沒有進版控**(在 `.gitignore` 裡)。所以:
+   - 換電腦或重新 clone 時,後台改過的題目不會跟著走,記得先用後台的「下載備份」匯出;
+   - 想讓改動永久留在 repo 裡,要把題目寫回 `server.js` 的 `DEFAULT_QUESTIONS`。
+
+> **想做成免安裝的可攜版分享給別人?**
+> 到 <https://nodejs.org> 下載 Windows 版的 zip,把裡面的 `node.exe` 放進 `runtime/` 資料夾,
+> 整包壓縮起來就是上面說的「雙擊即玩」版本(對方電腦不用裝任何東西)。
+> Mac 則是把下載檔裡的 `bin/node` 改名成 `node-mac` 放進 `runtime/`
+> (Apple Silicon 選 arm64、Intel 選 x64)。
+
 ### 全螢幕
 
 遊戲畫面本身就是**滿版設計**(整個瀏覽器視窗都是遊戲畫面)。
